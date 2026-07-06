@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>EduQueSCT</title>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 
 <style>
   body {
@@ -156,6 +157,9 @@
   <div id="errorBox"></div>
 
   <div id="guestDivider">— or —</div>
+  <div id="googleBtnContainer" style="display:flex; justify-content:center; margin: 6px 0;"></div>
+
+  <div id="guestDivider">— or —</div>
   <button id="guestBtn">Play as Guest</button>
 </div>
 
@@ -250,6 +254,49 @@ submitBtn.onclick = async () => {
     errorBox.textContent = "Couldn't reach the server. Check your connection.";
   }
 };
+
+// ================= GOOGLE SIGN-IN =================
+const GOOGLE_CLIENT_ID = "418666074204-p4barib3vqbs4iclh45tnbamhle6b0h9.apps.googleusercontent.com";
+
+function initGoogleSignIn() {
+  if (!window.google || !google.accounts || !google.accounts.id) {
+    setTimeout(initGoogleSignIn, 100); // gsi/client script loads async — poll until ready
+    return;
+  }
+  google.accounts.id.initialize({
+    client_id: GOOGLE_CLIENT_ID,
+    callback: handleGoogleCredential
+  });
+  google.accounts.id.renderButton(
+    document.getElementById("googleBtnContainer"),
+    { theme: "outline", size: "large", text: "signin_with", width: 240 }
+  );
+}
+initGoogleSignIn();
+
+async function handleGoogleCredential(response) {
+  errorBox.textContent = "";
+  try {
+    const res = await fetch(API_URL, {
+      method: "POST",
+      body: JSON.stringify({ action: "googleAuth", idToken: response.credential })
+    });
+    const data = await res.json();
+
+    if (!data.ok) {
+      errorBox.textContent = "Google sign-in failed. Try again.";
+      return;
+    }
+
+    localStorage.setItem("loggedInUser", data.username);
+    localStorage.setItem("completedTopics", JSON.stringify(data.completedTopics || []));
+    if (data.selectedGrade) localStorage.setItem("selectedGrade", data.selectedGrade);
+
+    window.location.href = "index.html";
+  } catch (err) {
+    errorBox.textContent = "Couldn't reach the server. Check your connection.";
+  }
+}
 
 // ================= GUEST =================
 document.getElementById("guestBtn").onclick = () => {

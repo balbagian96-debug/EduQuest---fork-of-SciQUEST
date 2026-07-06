@@ -36,6 +36,8 @@ function doPost(e) {
       return respond(loginUser(data.username, data.passwordHash));
     case "saveProgress":
       return respond(saveProgress(data.username, data.completedTopics, data.selectedGrade));
+    case "googleAuth":
+      return respond(googleAuth(data.idToken));
     default:
       // Legacy behavior: bare {name, score} appends a leaderboard row.
       return respond(addScore(data.name, data.score));
@@ -115,4 +117,51 @@ function saveProgress(username, completedTopics, selectedGrade) {
   sheet.getRange(found.rowIndex, 3).setValue(JSON.stringify(completedTopics || []));
   sheet.getRange(found.rowIndex, 4).setValue(selectedGrade || 7);
   return { ok: true };
+}
+
+// ---------------- Google Sign-In ----------------
+// Google users are stored as a normal Users row: username = their email,
+// passwordHash = the "GOOGLE_AUTH" sentinel (never a valid SHA-256 hex string,
+// so a manual login attempt with that email can never pass the hash check).
+
+const GOOGLE_CLIENT_ID = "418666074204-p4barib3vqbs4iclh45tnbamhle6b0h9.apps.googleusercontent.com";
+
+function verifyGoogleToken(idToken) {
+  try {
+    const res = UrlFetchApp.fetch(
+      "https://oauth2.googleapis.com/tokeninfo?id_token=" + encodeURIComponent(idToken),
+      { muteHttpExceptions: true }
+    );
+    if (res.getResponseCode() !== 200) return null; // Google already rejects bad signature/expiry here
+
+    const payload = JSON.parse(res.getContentText());
+    // aud must match OUR client ID — otherwise a token issued for a different
+    // app could be replayed here.
+    if (payload.aud !== GOOGLE_CLIENT_ID) return null;
+    if (!payload.email || payload.email_verified !== "true") return null;
+    return payload;
+  } catch (e) {
+    return null;
+  }
+}
+
+function googleAuth(idToken) {
+  const payload = verifyGoogleToken(idToken);
+  if (!payload) return { ok: false, error: "invalid_token" };
+
+  const email = payload.email;
+  const found = findUserRow(email);
+
+  if (found) {
+    return {
+      ok: true,
+      username: email,
+      completedTopics: JSON.parse(found.row[2] || "[]"),
+      selectedGrade: found.row[3] || 7
+    };
+  }
+
+  const sheet = getUsersSheet();
+  sheet.appendRow([email, "GOOGLE_AUTH", JSON.stringify([]), 7]);
+  return { ok: true, username: email, completedTopics: [], selectedGrade: 7 };
 }
