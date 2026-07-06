@@ -132,22 +132,30 @@ function verifyGoogleToken(idToken) {
       "https://oauth2.googleapis.com/tokeninfo?id_token=" + encodeURIComponent(idToken),
       { muteHttpExceptions: true }
     );
-    if (res.getResponseCode() !== 200) return null; // Google already rejects bad signature/expiry here
+    const status = res.getResponseCode();
+    const body = res.getContentText();
+    if (status !== 200) {
+      return { payload: null, debug: { stage: "tokeninfo_http", status, body } };
+    }
 
-    const payload = JSON.parse(res.getContentText());
+    const payload = JSON.parse(body);
     // aud must match OUR client ID — otherwise a token issued for a different
     // app could be replayed here.
-    if (payload.aud !== GOOGLE_CLIENT_ID) return null;
-    if (!payload.email || payload.email_verified !== "true") return null;
-    return payload;
+    if (payload.aud !== GOOGLE_CLIENT_ID) {
+      return { payload: null, debug: { stage: "aud_mismatch", aud: payload.aud, expected: GOOGLE_CLIENT_ID } };
+    }
+    if (!payload.email || payload.email_verified !== "true") {
+      return { payload: null, debug: { stage: "email_verified", email: payload.email, email_verified: payload.email_verified, type: typeof payload.email_verified } };
+    }
+    return { payload };
   } catch (e) {
-    return null;
+    return { payload: null, debug: { stage: "exception", message: String(e) } };
   }
 }
 
 function googleAuth(idToken) {
-  const payload = verifyGoogleToken(idToken);
-  if (!payload) return { ok: false, error: "invalid_token" };
+  const { payload, debug } = verifyGoogleToken(idToken);
+  if (!payload) return { ok: false, error: "invalid_token", debug };
 
   const email = payload.email;
   const found = findUserRow(email);

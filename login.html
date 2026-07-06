@@ -284,7 +284,9 @@ async function handleGoogleCredential(response) {
     const data = await res.json();
 
     if (!data.ok) {
-      errorBox.textContent = "Google sign-in failed. Try again.";
+      // TEMPORARY: surface backend debug info directly so we can diagnose
+      // without digging through Apps Script's execution log UI.
+      errorBox.textContent = "Google sign-in failed: " + JSON.stringify(data.debug || data.error);
       return;
     }
 
