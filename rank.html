@@ -67,6 +67,9 @@ li {
 const API_URL = "https://script.google.com/macros/s/AKfycbykSaLnj6ilD-77IYXzTqpu0jsKh7T7kHA07Lt6iOkXWHhYFL5Wu4yYJ4KaHnIoktE-7Q/exec";
 const score = localStorage.getItem("lastScore") || 0;
 
+const loggedInUser = localStorage.getItem("loggedInUser");
+if (loggedInUser) document.getElementById("name").value = loggedInUser;
+
 function submitScore() {
   const name = document.getElementById("name").value.trim();
   if (!name) return alert("Enter your name!");

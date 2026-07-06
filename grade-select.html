@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grade Select</title>
+
+<style>
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: 'Press Start 2P', cursive;
+}
+
+body {
+  background: url("level bg.png") no-repeat center center fixed;
+  background-size: cover;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* CONTAINER */
+#grades {
+  background: rgba(0,0,0,0.6);
+  padding: 35px 45px;
+  border-radius: 18px;
+  text-align: center;
+  color: white;
+}
+
+#grades h1 {
+  margin-bottom: 30px;
+  color: #FFD700;
+  font-size: 18px;
+}
+
+/* FLOAT ANIMATION */
+@keyframes float {
+  0%   { transform: translateY(0); }
+  50%  { transform: translateY(-8px); }
+  100% { transform: translateY(0); }
+}
+
+/* GRADE BUTTON */
+.level-btn {
+  display: block;
+  width: 260px;
+  margin: 16px auto;
+  padding: 16px;
+  font-size: 14px;
+  border-radius: 12px;
+  border: 3px solid #FFD700;
+  background: rgba(0,0,0,0.75);
+  color: #FFD700;
+  cursor: pointer;
+  transition: 0.25s;
+  animation: float 2.5s ease-in-out infinite;
+}
+
+.level-btn:hover {
+  background: #FFD700;
+  color: #000;
+  transform: scale(1.08);
+}
+
+/* BACK BUTTON */
+#backBtn {
+  margin-top: 28px;
+  background: #4b0010;
+}
+
+@media (max-width: 480px) {
+  #grades { padding: 24px 20px; }
+  #grades h1 { font-size: 14px; margin-bottom: 20px; }
+  .level-btn { width: min(260px, 78vw); font-size: 12px; padding: 12px; }
+}
+</style>
+</head>
+
+<body>
+
+<div id="grades">
+  <h1>📚 Select Your Grade</h1>
+
+  <button class="level-btn" data-grade="7">Grade 7</button>
+  <button class="level-btn" data-grade="8">Grade 8</button>
+  <button class="level-btn" data-grade="9">Grade 9</button>
+  <button class="level-btn" data-grade="10">Grade 10</button>
+
+  <button class="level-btn" id="backBtn">⬅ Back</button>
+</div>
+
+<script>
+document.querySelectorAll(".level-btn[data-grade]").forEach(btn => {
+  btn.onclick = () => {
+    localStorage.setItem("selectedGrade", btn.dataset.grade);
+    window.location.href = "level map.html";
+  };
+});
+
+document.getElementById("backBtn").onclick = () => {
+  window.location.href = "character page.html";
+};
+</script>
+
+</body>
+
+</html>

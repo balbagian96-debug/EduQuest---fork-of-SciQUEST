@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Level Select</title>
+<title>Topic Select</title>
 
 <style>
 html, body {
@@ -64,21 +64,24 @@ body {
   transform: scale(1.08);
 }
 
-/* LOCKED STATE */
-.level-btn.locked {
-  animation: none;
-  opacity: 0.45;
-  cursor: not-allowed;
-  pointer-events: none;
-  border-color: #888;
-  color: #ccc;
-  background: rgba(0,0,0,0.6);
-}
-
 /* BACK BUTTON */
 #backBtn {
   margin-top: 28px;
   background: #4b0010;
+}
+
+/* CHANGE GRADE BUTTON */
+#changeGradeBtn {
+  margin-top: 12px;
+  background: #4b0010;
+  font-size: 12px;
+}
+
+@media (max-width: 480px) {
+  #levels { padding: 24px 20px; }
+  #levels h1 { font-size: 13px; margin-bottom: 20px; }
+  .level-btn { width: min(260px, 78vw); font-size: 12px; padding: 12px; }
+  #topicList { gap: 20px; flex-wrap: wrap; }
 }
 </style>
 </head>
@@ -86,48 +89,98 @@ body {
 <body>
 
 <div id="levels">
-  <h1>🌿 Select Level</h1>
+  <h1 id="mapTitle">🗺️ Select Topic</h1>
 
-  <button class="level-btn" id="lvl1">Level 1</button>
-  <button class="level-btn" id="lvl2">Level 2 🔒</button>
-  <button class="level-btn" id="lvl3">Level 3 🔒</button>
+  <div id="topicList"></div>
 
   <button class="level-btn" id="backBtn">⬅ Main Menu</button>
+  <button class="level-btn" id="changeGradeBtn">🎓 Change Grade</button>
 </div>
 
 <script>
-const unlockedLevel = parseInt(localStorage.getItem("unlockedLevel")) || 1;
+// Subjects group the topic map — add a subject or a topic here to extend
+// the map. Each topic has an offline fallback question set in start.html's
+// FALLBACK_BANKS, used if a live Gemini call fails.
+const SUBJECTS = [
+  {
+    name: "Science",
+    topics: [
+      { key: "Biology" },
+      { key: "Physics" },
+      { key: "Geology" }
+    ]
+  },
+  {
+    name: "Math",
+    topics: [
+      { key: "Arithmetic" },
+      { key: "Algebra" },
+      { key: "Geometry" }
+    ]
+  },
+  {
+    name: "English/Reading",
+    topics: [
+      { key: "Literature" },
+      { key: "Grammar" }
+    ]
+  }
+];
 
-// LEVEL 1 (always unlocked)
-document.getElementById("lvl1").onclick = () => startLevel(1);
+const selectedGrade = localStorage.getItem("selectedGrade");
+const completedTopics = JSON.parse(localStorage.getItem("completedTopics") || "[]");
+const topicList = document.getElementById("topicList");
+const mapTitle = document.getElementById("mapTitle");
+const backBtn = document.getElementById("backBtn");
 
-// LEVEL 2
-const lvl2 = document.getElementById("lvl2");
-if (unlockedLevel >= 2) {
-  lvl2.textContent = "Level 2";
-  lvl2.onclick = () => startLevel(2);
-} else {
-  lvl2.classList.add("locked");
+const gradePrefix = selectedGrade ? `Grade ${selectedGrade} — ` : "";
+
+// Two-step select: subject first, then its subtopics.
+function showSubjects() {
+  mapTitle.textContent = `🗺️ ${gradePrefix}Select Subject`;
+  topicList.innerHTML = "";
+
+  SUBJECTS.forEach(subject => {
+    const btn = document.createElement("button");
+    btn.className = "level-btn";
+    const done = subject.topics.every(t => completedTopics.includes(t.key));
+    btn.textContent = done ? `${subject.name} ✅` : subject.name;
+    btn.onclick = () => showTopics(subject);
+    topicList.appendChild(btn);
+  });
+
+  backBtn.textContent = "⬅ Main Menu";
+  backBtn.onclick = () => {
+    window.location.href = "index.html";
+  };
 }
 
-// LEVEL 3
-const lvl3 = document.getElementById("lvl3");
-if (unlockedLevel >= 3) {
-  lvl3.textContent = "Level 3";
-  lvl3.onclick = () => startLevel(3);
-} else {
-  lvl3.classList.add("locked");
+function showTopics(subject) {
+  mapTitle.textContent = `🗺️ ${gradePrefix}${subject.name}`;
+  topicList.innerHTML = "";
+
+  subject.topics.forEach(topic => {
+    const btn = document.createElement("button");
+    btn.className = "level-btn";
+    const done = completedTopics.includes(topic.key);
+    btn.textContent = done ? `${topic.key} ✅` : topic.key;
+    btn.onclick = () => {
+      localStorage.setItem("selectedTopic", topic.key);
+      localStorage.setItem("selectedSubject", subject.name);
+      window.location.href = "start.html";
+    };
+    topicList.appendChild(btn);
+  });
+
+  backBtn.textContent = "⬅ Subjects";
+  backBtn.onclick = showSubjects;
 }
 
-// BACK TO MENU
-document.getElementById("backBtn").onclick = () => {
-  window.location.href = "index.html";
+document.getElementById("changeGradeBtn").onclick = () => {
+  window.location.href = "grade-select.html";
 };
 
-function startLevel(level) {
-  localStorage.setItem("selectedLevel", level);
-  window.location.href = "start.html";
-}
+showSubjects();
 </script>
 
 </body>

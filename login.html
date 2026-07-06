@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EduQueSCT</title>
+
+<style>
+  body {
+    margin: 0;
+    height: 100vh;
+    overflow: hidden;
+    background: #4b0010; /* fallback if the banner fails to load */
+    font-family: "Poppins", sans-serif;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #parallaxBg {
+    position: fixed;
+    top: -6%;
+    left: -6%;
+    width: 112%;
+    height: 112%;
+    background: url("eduquesct-banner.jpg") no-repeat center center;
+    background-size: cover;
+    z-index: 0;
+    will-change: transform;
+    transition: transform 0.2s ease-out;
+  }
+
+  h1 {
+    color: #FFD700;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 20px;
+    text-shadow: 2px 2px #000;
+    margin-bottom: 10px;
+  }
+
+  .card {
+    position: relative;
+    z-index: 1;
+    background: rgba(0, 0, 0, 0.8);
+    border: 4px solid #FFD700;
+    border-radius: 20px;
+    padding: 30px 40px;
+    width: 300px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
+    will-change: transform;
+    transition: transform 0.2s ease-out;
+  }
+
+  .tabs {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .tab-btn {
+    background: #4b0010;
+    color: #FFD700;
+    border: 3px solid #FFD700;
+    border-radius: 12px;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 11px;
+    padding: 10px 14px;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+
+  .tab-btn.active,
+  .tab-btn:hover {
+    background: #FFD700;
+    color: #4b0010;
+  }
+
+  input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px;
+    margin: 8px 0;
+    border-radius: 10px;
+    border: none;
+    font-size: 14px;
+  }
+
+  #submitBtn {
+    width: 100%;
+    margin-top: 10px;
+    padding: 12px;
+    background: #FFD700;
+    color: #4b0010;
+    border: none;
+    border-radius: 10px;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 12px;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+
+  #submitBtn:hover { box-shadow: 0 0 15px #FFD700; }
+
+  #errorBox {
+    margin-top: 14px;
+    color: #FFD700;
+    font-size: 13px;
+    text-shadow: 2px 2px #000;
+    min-height: 16px;
+  }
+
+  #guestDivider {
+    margin: 16px 0 8px;
+    color: #FFD700;
+    font-size: 11px;
+    opacity: 0.7;
+  }
+
+  #guestBtn {
+    width: 100%;
+    padding: 10px;
+    background: transparent;
+    color: #FFD700;
+    border: 2px solid #FFD700;
+    border-radius: 10px;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 10px;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+
+  #guestBtn:hover {
+    background: rgba(255, 215, 0, 0.15);
+  }
+</style>
+</head>
+<body>
+
+<div id="parallaxBg"></div>
+
+<div class="card">
+  <h1>EduQueSCT</h1>
+
+  <div class="tabs">
+    <button class="tab-btn active" id="loginTab">Log In</button>
+    <button class="tab-btn" id="registerTab">Register</button>
+  </div>
+
+  <input id="username" placeholder="Username" autocomplete="username">
+  <input id="password" type="password" placeholder="Password" autocomplete="current-password">
+
+  <button id="submitBtn">Log In</button>
+
+  <div id="errorBox"></div>
+
+  <div id="guestDivider">— or —</div>
+  <button id="guestBtn">Play as Guest</button>
+</div>
+
+<script>
+// ================= PARALLAX =================
+// Background drifts opposite the cursor, card drifts a touch less, for depth.
+// Skipped entirely for prefers-reduced-motion and on touch-only devices (no mousemove).
+if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+  const parallaxBg = document.getElementById("parallaxBg");
+  const parallaxCard = document.querySelector(".card");
+  document.addEventListener("mousemove", (e) => {
+    const xPct = e.clientX / window.innerWidth - 0.5;
+    const yPct = e.clientY / window.innerHeight - 0.5;
+    parallaxBg.style.transform = `translate(${xPct * -24}px, ${yPct * -24}px)`;
+    parallaxCard.style.transform = `translate(${xPct * 8}px, ${yPct * 8}px)`;
+  });
+}
+
+// ================= CONFIG =================
+const API_URL = "https://script.google.com/macros/s/AKfycbykSaLnj6ilD-77IYXzTqpu0jsKh7T7kHA07Lt6iOkXWHhYFL5Wu4yYJ4KaHnIoktE-7Q/exec";
+
+// ================= MODE TOGGLE =================
+const loginTab = document.getElementById("loginTab");
+const registerTab = document.getElementById("registerTab");
+const submitBtn = document.getElementById("submitBtn");
+const errorBox = document.getElementById("errorBox");
+let mode = "login";
+
+loginTab.onclick = () => setMode("login");
+registerTab.onclick = () => setMode("register");
+
+function setMode(next) {
+  mode = next;
+  loginTab.classList.toggle("active", mode === "login");
+  registerTab.classList.toggle("active", mode === "register");
+  submitBtn.textContent = mode === "login" ? "Log In" : "Register";
+  errorBox.textContent = "";
+}
+
+// ================= PASSWORD HASHING =================
+async function hashPassword(pw) {
+  const bytes = new TextEncoder().encode(pw);
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return Array.from(new Uint8Array(digest))
+    .map(b => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+// ================= SUBMIT =================
+submitBtn.onclick = async () => {
+  const username = document.getElementById("username").value.trim();
+  const password = document.getElementById("password").value;
+  errorBox.textContent = "";
+
+  if (!username || !password) {
+    errorBox.textContent = "Enter a username and password.";
+    return;
+  }
+
+  const passwordHash = await hashPassword(password);
+  const action = mode === "login" ? "login" : "register";
+
+  try {
+    const res = await fetch(API_URL, {
+      method: "POST",
+      body: JSON.stringify({ action, username, passwordHash })
+    });
+    const data = await res.json();
+
+    if (!data.ok) {
+      errorBox.textContent = data.error === "username_taken"
+        ? "That username is already taken."
+        : data.error === "invalid_credentials"
+        ? "Incorrect username or password."
+        : "Something went wrong. Try again.";
+      return;
+    }
+
+    if (mode === "register") {
+      // Registered successfully — switch to login so they log in with the same credentials.
+      setMode("login");
+      errorBox.textContent = "Account created! Log in below.";
+      return;
+    }
+
+    localStorage.setItem("loggedInUser", username);
+    localStorage.setItem("completedTopics", JSON.stringify(data.completedTopics || []));
+    if (data.selectedGrade) localStorage.setItem("selectedGrade", data.selectedGrade);
+
+    window.location.href = "index.html";
+  } catch (err) {
+    errorBox.textContent = "Couldn't reach the server. Check your connection.";
+  }
+};
+
+// ================= GUEST =================
+document.getElementById("guestBtn").onclick = () => {
+  const username = document.getElementById("username").value.trim();
+  errorBox.textContent = "";
+
+  if (!username) {
+    errorBox.textContent = "Enter a username to play as guest.";
+    return;
+  }
+
+  localStorage.setItem("loggedInUser", username);
+  localStorage.setItem("isGuest", "true");
+  localStorage.setItem("completedTopics", JSON.stringify([]));
+
+  window.location.href = "index.html";
+};
+</script>
+
+</body>
+</html>

@@ -1,0 +1,118 @@
+/**
+ * EduQueSCT Apps Script backend — reference source, checked into the repo for
+ * version control only. This file is NOT deployed automatically: paste it
+ * into the actual Google Apps Script project (script.google.com) behind the
+ * API_URL used in rank.html / login.html / start.html, then redeploy the
+ * Web App, same manual process the existing leaderboard script already uses.
+ *
+ * Sheets expected in the bound Spreadsheet:
+ *   - "Leaderboard": columns name, score            (existing, unchanged)
+ *   - "Users":       columns username, passwordHash, completedTopics, selectedGrade
+ *
+ * Passwords: the client hashes the password with SHA-256 (via crypto.subtle)
+ * before it ever leaves the browser. This script only ever sees/stores that
+ * hash and compares hashes as plain strings — it never sees a plaintext
+ * password. There is no per-user salt (a Sheets-backed store can't reasonably
+ * support one); that's an accepted limitation for a low-stakes educational
+ * game account, not a TODO to "fix" later.
+ */
+
+function doGet(e) {
+  const params = e.parameter || {};
+  if (params.action === "getProgress") {
+    return respond(getProgress(params.username));
+  }
+  // Legacy behavior: bare GET returns the leaderboard array.
+  return respond(getLeaderboard());
+}
+
+function doPost(e) {
+  const data = JSON.parse(e.postData.contents || "{}");
+
+  switch (data.action) {
+    case "register":
+      return respond(registerUser(data.username, data.passwordHash));
+    case "login":
+      return respond(loginUser(data.username, data.passwordHash));
+    case "saveProgress":
+      return respond(saveProgress(data.username, data.completedTopics, data.selectedGrade));
+    default:
+      // Legacy behavior: bare {name, score} appends a leaderboard row.
+      return respond(addScore(data.name, data.score));
+  }
+}
+
+function respond(obj) {
+  return ContentService.createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+// ---------------- Leaderboard (existing behavior) ----------------
+
+function getLeaderboard() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Leaderboard");
+  const rows = sheet.getDataRange().getValues().slice(1); // skip header
+  return rows.map(r => ({ name: r[0], score: r[1] }));
+}
+
+function addScore(name, score) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Leaderboard");
+  sheet.appendRow([name, score]);
+  return { ok: true };
+}
+
+// ---------------- Users / accounts ----------------
+
+function getUsersSheet() {
+  return SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Users");
+}
+
+function findUserRow(username) {
+  const sheet = getUsersSheet();
+  const rows = sheet.getDataRange().getValues();
+  for (let i = 1; i < rows.length; i++) {
+    if (rows[i][0] === username) return { rowIndex: i + 1, row: rows[i] };
+  }
+  return null;
+}
+
+function registerUser(username, passwordHash) {
+  if (!username || !passwordHash) return { ok: false, error: "missing_fields" };
+  if (findUserRow(username)) return { ok: false, error: "username_taken" };
+
+  const sheet = getUsersSheet();
+  sheet.appendRow([username, passwordHash, JSON.stringify([]), 7]);
+  return { ok: true };
+}
+
+function loginUser(username, passwordHash) {
+  const found = findUserRow(username);
+  if (!found || found.row[1] !== passwordHash) {
+    return { ok: false, error: "invalid_credentials" };
+  }
+  return {
+    ok: true,
+    completedTopics: JSON.parse(found.row[2] || "[]"),
+    selectedGrade: found.row[3] || 7
+  };
+}
+
+function getProgress(username) {
+  const found = findUserRow(username);
+  if (!found) return { ok: false, error: "not_found" };
+  return {
+    ok: true,
+    completedTopics: JSON.parse(found.row[2] || "[]"),
+    selectedGrade: found.row[3] || 7
+  };
+}
+
+function saveProgress(username, completedTopics, selectedGrade) {
+  const found = findUserRow(username);
+  if (!found) return { ok: false, error: "not_found" };
+
+  const sheet = getUsersSheet();
+  sheet.getRange(found.rowIndex, 3).setValue(JSON.stringify(completedTopics || []));
+  sheet.getRange(found.rowIndex, 4).setValue(selectedGrade || 7);
+  return { ok: true };
+}
