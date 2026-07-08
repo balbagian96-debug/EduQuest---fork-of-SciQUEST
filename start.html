@@ -248,9 +248,11 @@ body[data-mode="maze"] #touchJump { display: none; }
 // location.href navigation is async, so throw to halt the rest of this
 // script block — otherwise setup below (Gemini fetch, render loop) would
 // briefly run before the browser finishes navigating away.
-if (!localStorage.getItem("chosenCharacter")) {
+const VALID_CHARACTERS = ["panpan", "pepper", "scouty", "bubu", "nomnom"];
+if (!VALID_CHARACTERS.includes(localStorage.getItem("chosenCharacter"))) {
+  localStorage.removeItem("chosenCharacter");
   window.location.href = "character page.html";
-  throw new Error("No character chosen — redirecting to character select.");
+  throw new Error("No valid character chosen — redirecting to character select.");
 }
 
 // ================= CANVAS =================
