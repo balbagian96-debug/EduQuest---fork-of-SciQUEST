@@ -185,34 +185,34 @@ body[data-mode="maze"] #touchJump { display: none; }
 <canvas id="gameCanvas"></canvas>
 
 <div id="hud">
-  Score: <span id="score">0</span> |
+  <span data-i18n="hud_score_label">Score:</span> <span id="score">0</span> |
   Level <span id="levelNum">1</span>/3 |
-  Topic: <span id="lvl">Biology</span> (Grade <span id="gradeDisplay">7</span>)
+  <span data-i18n="hud_topic_label">Topic:</span> <span id="lvl">Biology</span> (Grade <span id="gradeDisplay">7</span>)
 </div>
 
 <div id="summary" class="overlay-base">
   <div class="card">
-    <h2>Topic Complete!</h2>
+    <h2 data-i18n="summary_title">Topic Complete!</h2>
     <p id="resultText"></p>
-    <button onclick="goMenu()">Main Menu</button>
-<button onclick="goMap()">Level Map</button>
-<button onclick="goRanks()">View Ranks</button>
-	<button onclick="chooseAnotherTopic()">Choose Another Topic</button>
+    <button onclick="goMenu()" data-i18n="summary_btn_mainmenu">Main Menu</button>
+<button onclick="goMap()" data-i18n="summary_btn_levelmap">Level Map</button>
+<button onclick="goRanks()" data-i18n="summary_btn_ranks">View Ranks</button>
+	<button onclick="chooseAnotherTopic()" data-i18n="summary_btn_another">Choose Another Topic</button>
   </div>
 </div>
 
 <div id="loadingOverlay" class="overlay-base" style="display:flex">
   <div class="card">
-    <h2>Loading questions...</h2>
+    <h2 data-i18n="loading_text">Loading questions...</h2>
   </div>
 </div>
 
 <div id="errorOverlay" class="overlay-base">
   <div class="card">
-    <h2>Couldn't load questions</h2>
-    <p>No offline questions exist for this topic yet. Check the Gemini API key/network and try again.</p>
-    <button onclick="location.reload()">Retry</button>
-    <button onclick="window.location.href='level map.html'">Back to Topic Select</button>
+    <h2 data-i18n="error_title">Couldn't load questions</h2>
+    <p data-i18n="error_body">No offline questions exist for this topic yet. Check the Gemini API key/network and try again.</p>
+    <button onclick="location.reload()" data-i18n="error_retry">Retry</button>
+    <button onclick="window.location.href='level map.html'" data-i18n="error_back">Back to Topic Select</button>
   </div>
 </div>
 
@@ -228,7 +228,7 @@ body[data-mode="maze"] #touchJump { display: none; }
   <div class="card">
     <h2 id="levelIntroTitle"></h2>
     <p id="levelIntroText"></p>
-    <button onclick="startNextLevel()">Go!</button>
+    <button onclick="startNextLevel()" data-i18n="levelintro_go">Go!</button>
   </div>
 </div>
 
@@ -241,6 +241,7 @@ body[data-mode="maze"] #touchJump { display: none; }
   </div>
 </div>
 
+<script src="strings.js"></script>
 <script>
 // ================= CHARACTER GUARD =================
 // Blocks entry into gameplay from ANY path (Start Game, the Levels shortcut,
@@ -2249,7 +2250,7 @@ Grammar: {
 const selectedGrade = parseInt(localStorage.getItem("selectedGrade")) || 7;
 const selectedTopic = localStorage.getItem("selectedTopic") || "Biology";
 const selectedSubject = localStorage.getItem("selectedSubject") || "Science";
-document.getElementById("lvl").textContent = selectedTopic;
+document.getElementById("lvl").textContent = topicLabel(selectedTopic);
 document.getElementById("gradeDisplay").textContent = selectedGrade;
 
 // ================= APPS SCRIPT BACKEND =================
@@ -2324,6 +2325,9 @@ async function fetchGeminiQuestions(topic, grade) {
 
 function pickFallback(topic, grade) {
   const tier = grade <= 8 ? "low" : grade === 9 ? "mid" : "high";
+  if (getLanguage() === "tl" && SCI_MATH_TOPICS.includes(topic) && FALLBACK_BANKS_TL[topic]) {
+    return FALLBACK_BANKS_TL[topic][tier];
+  }
   return FALLBACK_BANKS[topic][tier];
 }
 
@@ -2379,6 +2383,10 @@ const scoreEl = document.getElementById("score");
 // rolls score back to the checkpoint taken when that level was entered.
 const POINTS_PER_LEVEL = { 1: 1, 2: 2, 3: 3 };
 const LEVEL_NAMES = { 1: "Platformer", 2: "The Maze", 3: "Flappy Flight" };
+const LEVEL_NAMES_TL = { 1: "Platformer", 2: "Ang Labirinto", 3: "Paglipad" };
+function levelName(n) {
+  return getLanguage() === "tl" ? LEVEL_NAMES_TL[n] : LEVEL_NAMES[n];
+}
 let currentLevel = 1;
 let levelStartScore = 0;
 const levelNumEl = document.getElementById("levelNum");
@@ -2627,11 +2635,11 @@ function finishLevel(){
   if (currentLevel < 3) {
     // Interstitial, then the next level — the topic isn't complete yet.
     const next = currentLevel + 1;
-    document.getElementById("levelIntroTitle").textContent = `Level ${next}: ${LEVEL_NAMES[next]}`;
+    document.getElementById("levelIntroTitle").textContent = `Level ${next}: ${levelName(next)}`;
     document.getElementById("levelIntroText").textContent =
       next === 2
-        ? `Answer questions to open the gates and find the exit! Correct answers are now worth ${POINTS_PER_LEVEL[2]} points each.`
-        : `Tap or press Space to flap through the pipes! Correct answers are now worth ${POINTS_PER_LEVEL[3]} points each.`;
+        ? t("levelintro_maze_text", { n: POINTS_PER_LEVEL[2] })
+        : t("levelintro_flappy_text", { n: POINTS_PER_LEVEL[3] });
     document.getElementById("levelIntro").style.display = "flex";
     return;
   }
@@ -2648,7 +2656,7 @@ function finishLevel(){
   submitScoreToLeaderboard();
 
   summary.style.display = "flex";
-  resultText.textContent = `Score: ${score}`;
+  resultText.textContent = `${t("endscreen_score_label")} ${score}`;
 }
 
 function startNextLevel(){
@@ -2981,7 +2989,7 @@ function askQuestion(q, onResult){
   // see loadQuestions()), but the offline bank's 240 questions were written
   // with Gemini's help, so the badge still credits it rather than reading
   // "AI-generated" (which would imply a live per-question API call).
-  quizSourceBadge.textContent = "✨ Generated by Gemini";
+  quizSourceBadge.textContent = t("quiz_badge");
   quizSourceBadge.className = "source-gemini";
 
   quizText.textContent = q.data.text;
@@ -2999,11 +3007,11 @@ function askQuestion(q, onResult){
         btn.style.background = "#4caf50";
         score += POINTS_PER_LEVEL[currentLevel];
         scoreEl.textContent = score;
-        quizFeedback.textContent = `Correct! +${POINTS_PER_LEVEL[currentLevel]} point${POINTS_PER_LEVEL[currentLevel] > 1 ? "s" : ""}`;
+        quizFeedback.textContent = t("quiz_correct_feedback", { n: POINTS_PER_LEVEL[currentLevel] });
       } else {
         btn.style.background = "#e53935";
         quizChoices.children[q.data.correct - 1].style.background = "#4caf50";
-        quizFeedback.textContent = "Wrong — correct answer highlighted.";
+        quizFeedback.textContent = t("quiz_wrong_feedback");
       }
 
       setTimeout(() => {
