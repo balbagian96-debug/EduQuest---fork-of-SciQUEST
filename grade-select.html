@@ -88,16 +88,17 @@ body {
 <body>
 
 <div id="grades">
-  <h1>📚 Select Your Grade</h1>
+  <h1 data-i18n="grade_title">📚 Select Your Grade</h1>
 
-  <button class="level-btn" data-grade="7">Grade 7</button>
-  <button class="level-btn" data-grade="8">Grade 8</button>
-  <button class="level-btn" data-grade="9">Grade 9</button>
-  <button class="level-btn" data-grade="10">Grade 10</button>
+  <button class="level-btn" data-grade="7" data-i18n="grade_7">Grade 7</button>
+  <button class="level-btn" data-grade="8" data-i18n="grade_8">Grade 8</button>
+  <button class="level-btn" data-grade="9" data-i18n="grade_9">Grade 9</button>
+  <button class="level-btn" data-grade="10" data-i18n="grade_10">Grade 10</button>
 
-  <button class="level-btn" id="backBtn">⬅ Back</button>
+  <button class="level-btn" id="backBtn" data-i18n="grade_back">⬅ Back</button>
 </div>
 
+<script src="strings.js"></script>
 <script>
 document.querySelectorAll(".level-btn[data-grade]").forEach(btn => {
   btn.onclick = () => {
