@@ -159,25 +159,31 @@
 <div class="card">
   <h1>EduQueSCT</h1>
 
-  <div class="tabs">
-    <button class="tab-btn active" id="loginTab">Log In</button>
-    <button class="tab-btn" id="registerTab">Register</button>
+  <div id="langToggle" style="text-align:right; margin-bottom:8px;">
+    <button type="button" id="langEnBtn" style="font-size:11px; padding:4px 8px;">EN</button>
+    <button type="button" id="langTlBtn" style="font-size:11px; padding:4px 8px;">TL</button>
   </div>
 
-  <input id="username" placeholder="Username" autocomplete="username">
-  <input id="password" type="password" placeholder="Password" autocomplete="current-password">
+  <div class="tabs">
+    <button class="tab-btn active" id="loginTab" data-i18n="login_tab_login">Log In</button>
+    <button class="tab-btn" id="registerTab" data-i18n="login_tab_register">Register</button>
+  </div>
 
-  <button id="submitBtn">Log In</button>
+  <input id="username" placeholder="Username" autocomplete="username" data-i18n-placeholder="login_placeholder_username">
+  <input id="password" type="password" placeholder="Password" autocomplete="current-password" data-i18n-placeholder="login_placeholder_password">
+
+  <button id="submitBtn" data-i18n="login_btn_submit_login">Log In</button>
 
   <div id="errorBox"></div>
 
-  <div id="guestDivider">— or —</div>
+  <div id="guestDivider" data-i18n="login_or_divider">— or —</div>
   <div id="googleBtnContainer" style="display:flex; justify-content:center; margin: 6px 0;"></div>
 
-  <div id="guestDivider">— or —</div>
-  <button id="guestBtn">Play as Guest</button>
+  <div id="guestDivider" data-i18n="login_or_divider">— or —</div>
+  <button id="guestBtn" data-i18n="login_btn_guest">Play as Guest</button>
 </div>
 
+<script src="strings.js"></script>
 <script>
 const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -211,6 +217,10 @@ if (!reduceMotion) {
 // ================= CONFIG =================
 const API_URL = "https://script.google.com/macros/s/AKfycbykSaLnj6ilD-77IYXzTqpu0jsKh7T7kHA07Lt6iOkXWHhYFL5Wu4yYJ4KaHnIoktE-7Q/exec";
 
+// ================= LANGUAGE TOGGLE =================
+document.getElementById("langEnBtn").onclick = () => { setLanguage("en"); applyStaticI18n(); refreshSubmitBtnLabel(); };
+document.getElementById("langTlBtn").onclick = () => { setLanguage("tl"); applyStaticI18n(); refreshSubmitBtnLabel(); };
+
 // ================= MODE TOGGLE =================
 const loginTab = document.getElementById("loginTab");
 const registerTab = document.getElementById("registerTab");
@@ -225,8 +235,12 @@ function setMode(next) {
   mode = next;
   loginTab.classList.toggle("active", mode === "login");
   registerTab.classList.toggle("active", mode === "register");
-  submitBtn.textContent = mode === "login" ? "Log In" : "Register";
+  refreshSubmitBtnLabel();
   errorBox.textContent = "";
+}
+
+function refreshSubmitBtnLabel() {
+  submitBtn.textContent = mode === "login" ? t("login_btn_submit_login") : t("login_btn_submit_register");
 }
 
 // ================= PASSWORD HASHING =================
@@ -245,7 +259,7 @@ submitBtn.onclick = async () => {
   errorBox.textContent = "";
 
   if (!username || !password) {
-    errorBox.textContent = "Enter a username and password.";
+    errorBox.textContent = t("login_err_missing_fields");
     return;
   }
 
@@ -261,17 +275,17 @@ submitBtn.onclick = async () => {
 
     if (!data.ok) {
       errorBox.textContent = data.error === "username_taken"
-        ? "That username is already taken."
+        ? t("login_err_username_taken")
         : data.error === "invalid_credentials"
-        ? "Incorrect username or password."
-        : "Something went wrong. Try again.";
+        ? t("login_err_wrong_credentials")
+        : t("login_err_generic");
       return;
     }
 
     if (mode === "register") {
       // Registered successfully — switch to login so they log in with the same credentials.
       setMode("login");
-      errorBox.textContent = "Account created! Log in below.";
+      errorBox.textContent = t("login_success_registered");
       return;
     }
 
@@ -281,7 +295,7 @@ submitBtn.onclick = async () => {
 
     goTo("index.html");
   } catch (err) {
-    errorBox.textContent = "Couldn't reach the server. Check your connection.";
+    errorBox.textContent = t("login_err_network");
   }
 };
 
@@ -326,7 +340,7 @@ async function handleGoogleCredential(response) {
 
     goTo("index.html");
   } catch (err) {
-    errorBox.textContent = "Couldn't reach the server. Check your connection.";
+    errorBox.textContent = t("login_err_network");
   }
 }
 
@@ -336,7 +350,7 @@ document.getElementById("guestBtn").onclick = () => {
   errorBox.textContent = "";
 
   if (!username) {
-    errorBox.textContent = "Enter a username to play as guest.";
+    errorBox.textContent = t("login_err_guest_missing");
     return;
   }
 
