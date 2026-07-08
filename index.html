@@ -191,24 +191,30 @@ body.loaded { opacity: 1; }
 <img id="logo" src="2026.png" alt="EduQueSCT Logo">
 
 <!-- MENU BUTTONS -->
-<button class="menu-btn" id="startBtn">Start Game</button>
-<button class="menu-btn" id="charBtn">Characters</button>
-<button class="menu-btn" id="levelBtn">Levels</button>
-<button class="menu-btn" id="rankBtn">Ranks</button>
-<button class="menu-btn" id="howBtn">How to Play</button>
-<button class="menu-btn" id="logoutBtn">Log Out</button>
+<button class="menu-btn" id="startBtn" data-i18n="menu_start">Start Game</button>
+<button class="menu-btn" id="charBtn" data-i18n="menu_characters">Characters</button>
+<button class="menu-btn" id="levelBtn" data-i18n="menu_levels">Levels</button>
+<button class="menu-btn" id="rankBtn" data-i18n="menu_ranks">Ranks</button>
+<button class="menu-btn" id="howBtn" data-i18n="menu_howtoplay">How to Play</button>
+<button class="menu-btn" id="logoutBtn" data-i18n="menu_logout">Log Out</button>
+
+<!-- LANGUAGE TOGGLE -->
+<div id="langToggle" style="position:fixed; top:10px; right:10px;">
+  <button type="button" id="langEnBtn">EN</button>
+  <button type="button" id="langTlBtn">TL</button>
+</div>
 
 <!-- HOW TO PLAY OVERLAY -->
 <div id="howToPlay">
-  <h2>📘 How to Play</h2>
-  <p>
+  <h2 data-i18n="howtoplay_title">📘 How to Play</h2>
+  <p data-i18n-html="howtoplay_body">
     ➤ Move with <b>Arrow Keys</b> or <b>A / D</b>.<br>
     ➤ Jump with <b>Space</b> or <b>W / ↑</b>.<br>
     ➤ Avoid obstacles, answer questions, and reach the goal!<br>
     ➤ Earn points and unlock new levels.
 	➤ More points makes you climb the ranks!.
   </p>
-  <button id="closeHow">Back to Menu</button>
+  <button id="closeHow" data-i18n="howtoplay_back">Back to Menu</button>
 </div>
 
 <div id="endScreen" style="
@@ -224,11 +230,11 @@ body.loaded { opacity: 1; }
     z-index:9999;
 ">
 
-    <h1>🏁 LEVEL COMPLETE!</h1>
+    <h1 data-i18n="endscreen_title">🏁 LEVEL COMPLETE!</h1>
 
-    <p id="pointsText">Points: 0</p>
-    <p id="timeText">Time: 0s</p>
-    <p id="scoreText">Score: 0</p>
+    <p id="pointsText"><span data-i18n="endscreen_points_label">Points:</span> <span id="endPoints">0</span></p>
+    <p id="timeText"><span data-i18n="endscreen_time_label">Time:</span> <span id="endTime">0s</span></p>
+    <p id="scoreText"><span data-i18n="endscreen_score_label">Score:</span> <span id="endScore">0</span></p>
 
     <button onclick="continueToNext()"
     style="
@@ -239,10 +245,15 @@ body.loaded { opacity: 1; }
         border-radius:10px;
         cursor:pointer;
         margin-top:30px;
-    ">Continue</button>
+    " data-i18n="endscreen_continue">Continue</button>
 </div>
 
+<script src="strings.js"></script>
 <script>
+/* LANGUAGE TOGGLE */
+document.getElementById("langEnBtn").onclick = () => { setLanguage("en"); applyStaticI18n(); };
+document.getElementById("langTlBtn").onclick = () => { setLanguage("tl"); applyStaticI18n(); };
+
 /* SUBTLE BACKGROUND PARALLAX (scaled-down version of login.html's effect) */
 if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
   const bgLayer = document.getElementById("bgLayer");
@@ -281,7 +292,7 @@ startBtn.onclick = () => {
   if (chosen) {
     window.location.href = "grade-select.html";
   } else {
-    alert("Please choose a character first!");
+    alert(t("alert_choose_character"));
     window.location.href = "character page.html";
   }
 };
