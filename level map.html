@@ -99,10 +99,11 @@ body {
 
   <div id="topicList"></div>
 
-  <button class="level-btn" id="backBtn">⬅ Main Menu</button>
-  <button class="level-btn" id="changeGradeBtn">🎓 Change Grade</button>
+  <button class="level-btn" id="backBtn" data-i18n="levelmap_back_main">⬅ Main Menu</button>
+  <button class="level-btn" id="changeGradeBtn" data-i18n="levelmap_change_grade">🎓 Change Grade</button>
 </div>
 
+<script src="strings.js"></script>
 <script>
 // Subjects group the topic map — add a subject or a topic here to extend
 // the map. Each topic has an offline fallback question set in start.html's
@@ -143,33 +144,33 @@ const gradePrefix = selectedGrade ? `Grade ${selectedGrade} — ` : "";
 
 // Two-step select: subject first, then its subtopics.
 function showSubjects() {
-  mapTitle.textContent = `🗺️ ${gradePrefix}Select Subject`;
+  mapTitle.textContent = `🗺️ ${gradePrefix}${t("levelmap_select_subject")}`;
   topicList.innerHTML = "";
 
   SUBJECTS.forEach(subject => {
     const btn = document.createElement("button");
     btn.className = "level-btn";
     const done = subject.topics.every(t => completedTopics.includes(t.key));
-    btn.textContent = done ? `${subject.name} ✅` : subject.name;
+    btn.textContent = done ? `${subjectLabel(subject.name)} ✅` : subjectLabel(subject.name);
     btn.onclick = () => showTopics(subject);
     topicList.appendChild(btn);
   });
 
-  backBtn.textContent = "⬅ Main Menu";
+  backBtn.textContent = t("levelmap_back_main");
   backBtn.onclick = () => {
     window.location.href = "index.html";
   };
 }
 
 function showTopics(subject) {
-  mapTitle.textContent = `🗺️ ${gradePrefix}${subject.name}`;
+  mapTitle.textContent = `🗺️ ${gradePrefix}${subjectLabel(subject.name)}`;
   topicList.innerHTML = "";
 
   subject.topics.forEach(topic => {
     const btn = document.createElement("button");
     btn.className = "level-btn";
     const done = completedTopics.includes(topic.key);
-    btn.textContent = done ? `${topic.key} ✅` : topic.key;
+    btn.textContent = done ? `${topicLabel(topic.key)} ✅` : topicLabel(topic.key);
     btn.onclick = () => {
       localStorage.setItem("selectedTopic", topic.key);
       localStorage.setItem("selectedSubject", subject.name);
@@ -178,7 +179,7 @@ function showTopics(subject) {
     topicList.appendChild(btn);
   });
 
-  backBtn.textContent = "⬅ Subjects";
+  backBtn.textContent = t("levelmap_back_subjects");
   backBtn.onclick = showSubjects;
 }
 
