@@ -127,7 +127,7 @@
 </head>
 <body>
 
-<h1>Choose Your Character</h1>
+<h1 data-i18n="char_title">Choose Your Character</h1>
 
 <div class="character-gallery" id="characterGallery">
   <div class="char-option" data-name="panpan"><img src="panpan_idle.png" alt="Panpan"></div>
@@ -144,9 +144,11 @@
 
 <div id="msgBox"></div>
 
+<script src="strings.js"></script>
+
 <div class="button-container">
-  <button id="confirmBtn">Confirm Character</button>
-  <button onclick="window.location.href='index.html'">Back to Menu</button>
+  <button id="confirmBtn" data-i18n="char_confirm">Confirm Character</button>
+  <button onclick="window.location.href='index.html'" data-i18n="char_back">Back to Menu</button>
 </div>
 
 <script>
@@ -187,10 +189,10 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("confirmBtn").addEventListener("click", () => {
     if (selectedChar) {
       localStorage.setItem("chosenCharacter", selectedChar);
-      showMessage("Character Selected!");
+      showMessage(t("char_msg_selected"));
       window.location.href = "grade-select.html";
     } else {
-      showMessage("Please select a character!");
+      showMessage(t("char_msg_none"));
     }
   });
 });
