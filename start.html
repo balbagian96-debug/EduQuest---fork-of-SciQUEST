@@ -2279,8 +2279,8 @@ function submitScoreToLeaderboard() {
 // ================= GEMINI QUESTION GENERATION =================
 // NOTE: this key is intentionally hardcoded client-side (accepted risk for a
 // static site, per project decision) — anyone viewing page source can read it.
-const GEMINI_API_KEY = "AQ.Ab8RN6Jfbz4kU3dFHV2MlaP1m_sxa6FOP5XFwP4BTEwAUQ-bbw";
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+const GEMINI_API_KEY = "AQ.Ab8RN6LDRIPCCr9667AQHMcwjM8lh2MCIEba9Z3cYHI0EQqLFg";
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${GEMINI_API_KEY}`;
 
 // The pool is now 15 (5 per level). Accept >= 11 so a slightly short Gemini
 // response is still usable; anything smaller falls back to the offline bank.
@@ -2292,7 +2292,7 @@ function validateQuestions(arr) {
   );
 }
 
-const GEMINI_TIMEOUT_MS = 5000;
+const GEMINI_TIMEOUT_MS = 20000;
 
 async function fetchGeminiQuestions(topic, grade) {
   const prompt = `Generate exactly 15 multiple-choice ${selectedSubject} questions on the topic "${topic}" for a grade ${grade} student.
