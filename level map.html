@@ -150,7 +150,7 @@ function showSubjects() {
   SUBJECTS.forEach(subject => {
     const btn = document.createElement("button");
     btn.className = "level-btn";
-    const done = subject.topics.every(t => completedTopics.includes(t.key));
+    const done = subject.topics.every(topic => completedTopics.includes(topic.key));
     btn.textContent = done ? `${subjectLabel(subject.name)} ✅` : subjectLabel(subject.name);
     btn.onclick = () => showTopics(subject);
     topicList.appendChild(btn);
