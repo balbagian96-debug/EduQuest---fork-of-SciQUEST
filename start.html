@@ -2277,10 +2277,12 @@ function submitScoreToLeaderboard() {
 }
 
 // ================= GEMINI QUESTION GENERATION =================
-// NOTE: this key is intentionally hardcoded client-side (accepted risk for a
-// static site, per project decision) — anyone viewing page source can read it.
-const GEMINI_API_KEY = "AQ.Ab8RN6LDRIPCCr9667AQHMcwjM8lh2MCIEba9Z3cYHI0EQqLFg";
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${GEMINI_API_KEY}`;
+// Calls are proxied through apps-script-backend.gs (action: "generateQuestions")
+// rather than hitting Google directly — client-side Gemini keys are no longer
+// viable on this account (AI Studio keys reject direct REST calls; Cloud
+// Console keys for the Gemini API now require a service-account binding the
+// browser can't hold). The backend uses its own authorized identity instead,
+// so the frontend never sees a Gemini credential at all.
 
 // The pool is now 15 (5 per level). Accept >= 11 so a slightly short Gemini
 // response is still usable; anything smaller falls back to the offline bank.
@@ -2295,32 +2297,26 @@ function validateQuestions(arr) {
 const GEMINI_TIMEOUT_MS = 20000;
 
 async function fetchGeminiQuestions(topic, grade) {
-  const prompt = `Generate exactly 15 multiple-choice ${selectedSubject} questions on the topic "${topic}" for a grade ${grade} student.
-All 15 must be distinct from one another — they will be split across three mini-levels, so variety matters.
-Respond with ONLY strict JSON, no markdown fences, matching exactly this shape:
-[{"text":"...", "choices":["...","...","...","..."], "correct":1}, ...]
-"correct" is a 1-indexed integer (1-4) pointing to the correct entry in "choices". Exactly 15 items, exactly 4 choices each.`;
-
-  // Abort if Gemini takes longer than 5s so a slow call falls back to the
-  // offline bank instead of leaving the player on the loading screen.
+  // Abort if the backend takes longer than 20s so a slow call falls back to
+  // the offline bank instead of leaving the player on the loading screen.
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), GEMINI_TIMEOUT_MS);
   try {
-    const res = await fetch(GEMINI_URL, {
+    // No explicit Content-Type header — matches the existing saveProgress/
+    // addScore calls' pattern so this stays a CORS "simple request" and skips
+    // the preflight OPTIONS check that Apps Script Web Apps don't handle.
+    const res = await fetch(API_URL, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+      body: JSON.stringify({ action: "generateQuestions", topic, subject: selectedSubject, grade }),
       signal: controller.signal
     });
-    if (!res.ok) throw new Error("gemini_http_" + res.status);
+    if (!res.ok) throw new Error("backend_http_" + res.status);
 
     const data = await res.json();
-    const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-    const cleaned = raw.replace(/```json|```/g, "").trim();
-    const parsed = JSON.parse(cleaned);
+    if (!data.ok) throw new Error(data.error || "backend_generation_failed");
 
-    if (!validateQuestions(parsed)) throw new Error("gemini_shape_invalid");
-    return parsed;
+    if (!validateQuestions(data.questions)) throw new Error("gemini_shape_invalid");
+    return data.questions;
   } finally {
     clearTimeout(timer);
   }
@@ -2356,17 +2352,19 @@ function questionsForLevel(level) {
   return out;
 }
 
+// Live Gemini generation is disabled for now: the Generative Language API
+// only supports API-key auth (not viable client-side on this account) and
+// the OAuth-compatible alternative, Vertex AI, needs billing enabled — not
+// worth it for this project. fetchGeminiQuestions()/generateQuestions stay
+// in place (frontend + apps-script-backend.gs) as dormant plumbing in case
+// Vertex AI gets set up later; loadQuestions() just goes straight to the
+// offline bank so players aren't stuck waiting on a call that can't succeed.
 async function loadQuestions() {
-  try {
-    activeQuestions = shuffleArray(await fetchGeminiQuestions(selectedTopic, selectedGrade));
-    questionsSource = "gemini";
-  } catch (e) {
-    if (FALLBACK_BANKS[selectedTopic]) {
-      activeQuestions = shuffleArray([...pickFallback(selectedTopic, selectedGrade)]);
-      questionsSource = "fallback";
-    } else {
-      loadFailed = true;
-    }
+  if (FALLBACK_BANKS[selectedTopic]) {
+    activeQuestions = shuffleArray([...pickFallback(selectedTopic, selectedGrade)]);
+    questionsSource = "fallback";
+  } else {
+    loadFailed = true;
   }
 }
 
