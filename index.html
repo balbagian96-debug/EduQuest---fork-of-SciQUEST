@@ -9,15 +9,32 @@ body {
   margin: 0;
   height: 100vh;
   overflow: hidden;
-  background: url("siena.png") no-repeat center center fixed;
-  background-size: cover;
+  background: #4b0010;
   font-family: 'Press Start 2P', cursive;
   color: white;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
+body.loaded { opacity: 1; }
+
+#bgLayer {
+  position: fixed;
+  top: -4%;
+  left: -4%;
+  width: 108%;
+  height: 108%;
+  background: url("siena.png") no-repeat center center;
+  background-size: cover;
+  z-index: 0;
+  will-change: transform;
+  transition: transform 0.2s ease-out;
 }
 
 /* LOGO */
 #logo {
   position: absolute;
+  z-index: 1;
   top: 60px;
   left: 50%;
   transform: translateX(-50%);
@@ -40,22 +57,28 @@ body {
 /* BUTTON STYLING */
 .menu-btn {
   position: absolute;
-  background: rgba(0, 0, 0, 0.75);
+  z-index: 1;
+  background: linear-gradient(160deg, rgba(20, 20, 20, 0.85), rgba(0, 0, 0, 0.7));
   color: #FFD700;
   border: 3px solid #FFD700;
-  border-radius: 12px;
+  border-radius: 14px;
   font-size: 16px;
   padding: 18px 30px;
   cursor: pointer;
-  transition: 0.2s;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  transition: transform 0.22s cubic-bezier(.34,1.56,.64,1), box-shadow 0.22s ease, background 0.18s ease;
   text-shadow: 2px 2px 0 #000;
 }
 
 .menu-btn:hover {
-  background: #FFD700;
+  background: linear-gradient(160deg, #ffe14d, #FFD700);
   color: #000;
-  transform: scale(1.1);
+  transform: scale(1.06);
+  box-shadow: 0 0 18px rgba(255, 215, 0, 0.55), 0 6px 20px rgba(0, 0, 0, 0.4);
 }
+
+#startBtn:hover { transform: translate(-50%, -50%) scale(1.08); }
+#rankBtn:hover { transform: translateX(-50%) scale(1.06); }
 
 /* BUTTON POSITIONS */
 #startBtn {
@@ -144,18 +167,25 @@ body {
 #closeHow {
   padding: 12px 25px;
   border: none;
-  border-radius: 8px;
-  background: #FFD700;
+  border-radius: 14px;
+  background: linear-gradient(160deg, #ffe14d, #FFD700);
   color: #000;
   font-weight: bold;
   cursor: pointer;
   margin-top: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  transition: transform 0.22s cubic-bezier(.34,1.56,.64,1), box-shadow 0.22s ease;
 }
-#closeHow:hover { background: #ffec80; }
+#closeHow:hover {
+  transform: scale(1.06);
+  box-shadow: 0 0 18px rgba(255, 215, 0, 0.55), 0 6px 20px rgba(0, 0, 0, 0.4);
+}
 
 </style>
 </head>
 <body>
+
+<div id="bgLayer"></div>
 
 <!-- LOGO -->
 <img id="logo" src="2026.png" alt="EduQueSCT Logo">
@@ -213,9 +243,21 @@ body {
 </div>
 
 <script>
+/* SUBTLE BACKGROUND PARALLAX (scaled-down version of login.html's effect) */
+if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+  const bgLayer = document.getElementById("bgLayer");
+  document.addEventListener("mousemove", (e) => {
+    const xPct = e.clientX / window.innerWidth - 0.5;
+    const yPct = e.clientY / window.innerHeight - 0.5;
+    bgLayer.style.transform = `translate(${xPct * -10}px, ${yPct * -10}px)`;
+  });
+}
+
 /* LOGIN GATE */
 if (!localStorage.getItem("loggedInUser")) {
-  window.location.href = "login.html";
+  window.location.href = "landing.html";
+} else {
+  document.body.classList.add("loaded");
 }
 
 /* MENU LOGIC */

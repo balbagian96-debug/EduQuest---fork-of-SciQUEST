@@ -11,30 +11,49 @@ body {
   min-height: 100vh;
   background: url("trees.png") center/cover no-repeat;
   font-family: Arial, sans-serif;
-  color: white;
+  color: #fff;
+}
+
+h2, h3 {
+  font-family: 'Press Start 2P', cursive;
+  color: #FFD700;
+  text-shadow: 2px 2px 0 #000;
 }
 
 .container {
   max-width: 420px;
   margin: 80px auto;
-  background: rgba(0,0,0,0.75);
+  background: rgba(10, 0, 4, 0.72);
+  backdrop-filter: blur(6px);
+  border: 3px solid #FFD700;
+  border-radius: 18px;
   padding: 25px;
-  border-radius: 14px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
   text-align: center;
 }
 
-input, button {
+button {
   width: 90%;
-  padding: 10px;
+  padding: 12px;
   margin: 8px 0;
-  border-radius: 8px;
-  border: none;
+  border: 3px solid #FFD700;
+  border-radius: 14px;
+  background: linear-gradient(160deg, rgba(20, 20, 20, 0.85), rgba(0, 0, 0, 0.7));
+  color: #FFD700;
+  font-family: 'Press Start 2P', cursive;
+  font-size: 12px;
+  font-weight: bold;
+  text-shadow: 2px 2px 0 #000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+  transition: transform 0.22s cubic-bezier(.34,1.56,.64,1), box-shadow 0.22s ease, background 0.18s ease;
 }
 
-button {
-  background: gold;
-  font-weight: bold;
-  cursor: pointer;
+button:hover {
+  background: linear-gradient(160deg, #ffe14d, #FFD700);
+  color: #000;
+  transform: scale(1.06);
+  box-shadow: 0 0 18px rgba(255, 215, 0, 0.55), 0 6px 20px rgba(0, 0, 0, 0.4);
 }
 
 ul {
@@ -45,6 +64,7 @@ ul {
 li {
   padding: 6px 0;
   border-bottom: 1px solid #555;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.6);
 }
 </style>
 </head>
@@ -54,9 +74,6 @@ li {
 <div class="container">
   <h2>🏆 Leaderboard</h2>
 
-  <input id="name" placeholder="Your name">
-  <button onclick="submitScore()">Submit Score</button>
-
   <h3>Top Players</h3>
   <ul id="list"></ul>
 
@@ -64,23 +81,9 @@ li {
 </div>
 
 <script>
+// View-only: scores are submitted automatically by start.html when a topic
+// finishes — no manual name/submit form here anymore.
 const API_URL = "https://script.google.com/macros/s/AKfycbykSaLnj6ilD-77IYXzTqpu0jsKh7T7kHA07Lt6iOkXWHhYFL5Wu4yYJ4KaHnIoktE-7Q/exec";
-const score = localStorage.getItem("lastScore") || 0;
-
-const loggedInUser = localStorage.getItem("loggedInUser");
-if (loggedInUser) document.getElementById("name").value = loggedInUser;
-
-function submitScore() {
-  const name = document.getElementById("name").value.trim();
-  if (!name) return alert("Enter your name!");
-
-  fetch(API_URL, {
-    method: "POST",
-    body: JSON.stringify({ name, score })
-  }).then(() => {
-    loadScores();
-  });
-}
 
 function loadScores() {
   fetch(API_URL)

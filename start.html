@@ -32,9 +32,12 @@ canvas {
   top: 12px;
   left: 12px;
   padding: 8px 12px;
-  background: rgba(0,0,0,.6);
-  color: #fff;
-  border-radius: 8px;
+  background: linear-gradient(160deg, rgba(20,20,20,.85), rgba(0,0,0,.7));
+  color: #FFD700;
+  border: 2px solid #FFD700;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,.35);
+  text-shadow: 2px 2px 0 #000;
   font-weight: bold;
 }
 
@@ -48,21 +51,33 @@ canvas {
 }
 
 .card {
-  background: #fff;
+  background: rgba(10, 0, 4, 0.72);
+  backdrop-filter: blur(6px);
+  border: 3px solid #FFD700;
   padding: 24px;
-  border-radius: 12px;
+  border-radius: 18px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
   text-align: center;
   max-width: 480px;
+  color: #fff;
 }
 
 .card button {
   margin: 10px;
   padding: 10px 16px;
   font-weight: bold;
-  border-radius: 8px;
-  border: none;
-  background: gold;
+  border-radius: 14px;
+  border: 3px solid #FFD700;
+  background: linear-gradient(160deg, #ffe14d, #FFD700);
+  color: #4b0010;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
   cursor: pointer;
+  transition: transform 0.22s cubic-bezier(.34,1.56,.64,1), box-shadow 0.22s ease;
+}
+
+.card button:hover {
+  transform: scale(1.06);
+  box-shadow: 0 0 18px rgba(255, 215, 0, 0.55), 0 6px 20px rgba(0, 0, 0, 0.4);
 }
 
 #quizChoices {
@@ -76,10 +91,18 @@ canvas {
   margin: 0;
   padding: 10px 16px;
   font-weight: bold;
-  border-radius: 8px;
-  border: none;
-  background: gold;
+  border-radius: 14px;
+  border: 3px solid #FFD700;
+  background: linear-gradient(160deg, #ffe14d, #FFD700);
+  color: #4b0010;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
   cursor: pointer;
+  transition: transform 0.22s cubic-bezier(.34,1.56,.64,1), box-shadow 0.22s ease;
+}
+
+#quizChoices button:hover:not(:disabled) {
+  transform: scale(1.06);
+  box-shadow: 0 0 18px rgba(255, 215, 0, 0.55), 0 6px 20px rgba(0, 0, 0, 0.4);
 }
 
 #quizChoices button:disabled {
@@ -123,11 +146,12 @@ canvas {
   width: 64px;
   height: 64px;
   border-radius: 50%;
-  background: rgba(0,0,0,.55);
+  background: linear-gradient(160deg, rgba(20,20,20,.75), rgba(0,0,0,.55));
   border: 3px solid #FFD700;
   color: #FFD700;
   font-size: 26px;
   font-weight: bold;
+  box-shadow: 0 4px 12px rgba(0,0,0,.35);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -140,6 +164,15 @@ canvas {
 #touchLeft { left: 24px; }
 #touchRight { left: 100px; }
 #touchJump { right: 24px; }
+#touchUp { right: 24px; bottom: 104px; }
+#touchDown { right: 24px; }
+
+/* Per-mode touch layout: the maze (top-view) swaps the jump button for an
+   up/down d-pad; the other levels keep left/right/jump as before. */
+#touchUp, #touchDown { display: none; }
+body[data-mode="maze"] #touchUp,
+body[data-mode="maze"] #touchDown { display: flex; }
+body[data-mode="maze"] #touchJump { display: none; }
 
 .touch-btn.pressed {
   background: rgba(255,215,0,.35);
@@ -153,12 +186,13 @@ canvas {
 
 <div id="hud">
   Score: <span id="score">0</span> |
+  Level <span id="levelNum">1</span>/3 |
   Topic: <span id="lvl">Biology</span> (Grade <span id="gradeDisplay">7</span>)
 </div>
 
 <div id="summary" class="overlay-base">
   <div class="card">
-    <h2>Level Complete!</h2>
+    <h2>Topic Complete!</h2>
     <p id="resultText"></p>
     <button onclick="goMenu()">Main Menu</button>
 <button onclick="goMap()">Level Map</button>
@@ -186,6 +220,16 @@ canvas {
   <div class="touch-btn" id="touchLeft">◀</div>
   <div class="touch-btn" id="touchRight">▶</div>
   <div class="touch-btn" id="touchJump">⬆</div>
+  <div class="touch-btn" id="touchUp">▲</div>
+  <div class="touch-btn" id="touchDown">▼</div>
+</div>
+
+<div id="levelIntro" class="overlay-base">
+  <div class="card">
+    <h2 id="levelIntroTitle"></h2>
+    <p id="levelIntroText"></p>
+    <button onclick="startNextLevel()">Go!</button>
+  </div>
 </div>
 
 <div id="quizModal" class="overlay-base">
@@ -276,6 +320,56 @@ Biology: {
       text: "What is the gas needed for photosynthesis?",
       choices: ["Oxygen", "Carbon Dioxide", "Nitrogen", "Hydrogen"],
       correct: 2
+    },
+    {
+      text: "Which cell part controls the activities of the cell?",
+      choices: ["Nucleus", "Cell wall", "Cytoplasm", "Ribosome"],
+      correct: 1
+    },
+    {
+      text: "What gas do plants release during photosynthesis?",
+      choices: ["Carbon dioxide", "Oxygen", "Nitrogen", "Water vapor"],
+      correct: 2
+    },
+    {
+      text: "Which blood cells help fight infection?",
+      choices: ["Red blood cells", "White blood cells", "Platelets", "Plasma"],
+      correct: 2
+    },
+    {
+      text: "What is the basic unit of life?",
+      choices: ["Tissue", "Organ", "Cell", "Atom"],
+      correct: 3
+    },
+    {
+      text: "Which organ is part of the digestive system?",
+      choices: ["Lungs", "Stomach", "Heart", "Kidney"],
+      correct: 2
+    },
+    {
+      text: "What do we call animals that eat only plants?",
+      choices: ["Carnivores", "Herbivores", "Omnivores", "Decomposers"],
+      correct: 2
+    },
+    {
+      text: "Which part of the plant absorbs water from the soil?",
+      choices: ["Leaves", "Stem", "Roots", "Flower"],
+      correct: 3
+    },
+    {
+      text: "What gas do humans need to breathe in to survive?",
+      choices: ["Carbon dioxide", "Oxygen", "Helium", "Hydrogen"],
+      correct: 2
+    },
+    {
+      text: "What is the green pigment in plants called?",
+      choices: ["Melanin", "Chlorophyll", "Hemoglobin", "Keratin"],
+      correct: 2
+    },
+    {
+      text: "Which body system includes the brain and nerves?",
+      choices: ["Respiratory", "Nervous", "Circulatory", "Digestive"],
+      correct: 2
     }
   ],
 
@@ -314,6 +408,56 @@ Biology: {
       text: "What is the pigment that absorbs sunlight?",
       choices: ["Chlorophyll", "Acrylic", "Stoma", "Melanin"],
       correct: 1
+    },
+    {
+      text: "What is the powerhouse of the cell?",
+      choices: ["Nucleus", "Mitochondria", "Ribosome", "Golgi body"],
+      correct: 2
+    },
+    {
+      text: "During cellular respiration, glucose reacts with oxygen to release:",
+      choices: ["Energy (ATP)", "Chlorophyll", "Proteins", "Nitrogen"],
+      correct: 1
+    },
+    {
+      text: "Which molecule carries genetic information?",
+      choices: ["DNA", "ATP", "Glucose", "Lipid"],
+      correct: 1
+    },
+    {
+      text: "What type of blood cell carries oxygen?",
+      choices: ["White blood cells", "Platelets", "Red blood cells", "Plasma"],
+      correct: 3
+    },
+    {
+      text: "What is the process by which plants lose water through their leaves?",
+      choices: ["Respiration", "Transpiration", "Condensation", "Digestion"],
+      correct: 2
+    },
+    {
+      text: "In a food chain, organisms that make their own food are called:",
+      choices: ["Consumers", "Producers", "Decomposers", "Predators"],
+      correct: 2
+    },
+    {
+      text: "Which organ filters waste from the blood to form urine?",
+      choices: ["Liver", "Kidney", "Lungs", "Heart"],
+      correct: 2
+    },
+    {
+      text: "What is the site of photosynthesis in a plant cell?",
+      choices: ["Mitochondria", "Nucleus", "Chloroplast", "Vacuole"],
+      correct: 3
+    },
+    {
+      text: "An offspring receives its genes from:",
+      choices: ["Only the mother", "Only the father", "Both parents", "Neither parent"],
+      correct: 3
+    },
+    {
+      text: "What is the largest organ of the human body?",
+      choices: ["Liver", "Skin", "Lungs", "Brain"],
+      correct: 2
     }
   ],
 
@@ -362,6 +506,56 @@ Biology: {
         "More light = more energy"
       ],
       correct: 4
+    },
+    {
+      text: "Which process produces gametes with half the chromosome number?",
+      choices: ["Mitosis", "Meiosis", "Binary fission", "Replication"],
+      correct: 2
+    },
+    {
+      text: "What is the complementary base of adenine in DNA?",
+      choices: ["Guanine", "Cytosine", "Thymine", "Uracil"],
+      correct: 3
+    },
+    {
+      text: "In Mendel's law of segregation, allele pairs separate during:",
+      choices: ["Fertilization", "Gamete formation", "Digestion", "Mitosis"],
+      correct: 2
+    },
+    {
+      text: "Which organelle is responsible for protein synthesis?",
+      choices: ["Ribosome", "Lysosome", "Vacuole", "Golgi body"],
+      correct: 1
+    },
+    {
+      text: "The main products of glycolysis include:",
+      choices: ["Pyruvate and ATP", "Only oxygen", "Only water", "Chlorophyll"],
+      correct: 1
+    },
+    {
+      text: "A change in the DNA sequence of an organism is called a:",
+      choices: ["Adaptation", "Mutation", "Migration", "Selection"],
+      correct: 2
+    },
+    {
+      text: "Which biomolecule is the main long-term energy store in animals?",
+      choices: ["Glucose", "Fat (lipids)", "Protein", "Nucleic acid"],
+      correct: 2
+    },
+    {
+      text: "The theory of natural selection was proposed by:",
+      choices: ["Gregor Mendel", "Charles Darwin", "Louis Pasteur", "Robert Hooke"],
+      correct: 2
+    },
+    {
+      text: "Gas exchange in the lungs occurs mainly by:",
+      choices: ["Active transport", "Diffusion", "Osmosis", "Filtration"],
+      correct: 2
+    },
+    {
+      text: "Which trophic level has the most available energy?",
+      choices: ["Producers", "Primary consumers", "Secondary consumers", "Tertiary consumers"],
+      correct: 1
     }
   ]
 }, // Biology
@@ -392,6 +586,56 @@ Physics: {
       text: "What is the formula for speed?",
       choices: ["distance x time", "distance / time", "time / distance", "mass x acceleration"],
       correct: 2
+    },
+    {
+      text: "What is the SI unit of energy?",
+      choices: ["Newton", "Joule", "Watt", "Ohm"],
+      correct: 2
+    },
+    {
+      text: "Which of these is a form of energy?",
+      choices: ["Meter", "Kilogram", "Heat", "Second"],
+      correct: 3
+    },
+    {
+      text: "What force pulls objects toward the Earth?",
+      choices: ["Friction", "Magnetism", "Gravity", "Tension"],
+      correct: 3
+    },
+    {
+      text: "A push or a pull is called a:",
+      choices: ["Mass", "Force", "Speed", "Weight"],
+      correct: 2
+    },
+    {
+      text: "Which instrument measures temperature?",
+      choices: ["Barometer", "Thermometer", "Ammeter", "Ruler"],
+      correct: 2
+    },
+    {
+      text: "What is the change from a solid to a liquid called?",
+      choices: ["Freezing", "Melting", "Evaporation", "Condensation"],
+      correct: 2
+    },
+    {
+      text: "Sound travels fastest through which medium?",
+      choices: ["Air", "Water", "A solid", "A vacuum"],
+      correct: 3
+    },
+    {
+      text: "Which simple machine is a see-saw an example of?",
+      choices: ["Lever", "Pulley", "Wedge", "Screw"],
+      correct: 1
+    },
+    {
+      text: "What do we call the energy of a moving object?",
+      choices: ["Potential energy", "Kinetic energy", "Chemical energy", "Nuclear energy"],
+      correct: 2
+    },
+    {
+      text: "What is the SI unit of length?",
+      choices: ["Gram", "Second", "Meter", "Liter"],
+      correct: 3
     }
   ],
 
@@ -420,6 +664,56 @@ Physics: {
       text: "Which law states that for every action there is an equal and opposite reaction?",
       choices: ["Newton's First Law", "Newton's Second Law", "Newton's Third Law", "Law of Conservation of Energy"],
       correct: 3
+    },
+    {
+      text: "What is the approximate acceleration due to gravity on Earth?",
+      choices: ["5 m/s²", "9.8 m/s²", "20 m/s²", "1 m/s²"],
+      correct: 2
+    },
+    {
+      text: "The SI unit of power is the:",
+      choices: ["Joule", "Newton", "Watt", "Pascal"],
+      correct: 3
+    },
+    {
+      text: "Weight is calculated as mass times what?",
+      choices: ["Velocity", "Acceleration due to gravity", "Distance", "Area"],
+      correct: 2
+    },
+    {
+      text: "Which quantity has both magnitude and direction?",
+      choices: ["Scalar", "Vector", "Distance", "Speed"],
+      correct: 2
+    },
+    {
+      text: "The tendency of an object to resist a change in its motion is called:",
+      choices: ["Momentum", "Inertia", "Friction", "Gravity"],
+      correct: 2
+    },
+    {
+      text: "What kind of energy is stored in a stretched spring?",
+      choices: ["Kinetic", "Potential", "Thermal", "Sound"],
+      correct: 2
+    },
+    {
+      text: "On a speed-time graph, a straight line sloping upward shows:",
+      choices: ["Constant speed", "Acceleration", "Rest", "Deceleration"],
+      correct: 2
+    },
+    {
+      text: "What force opposes motion between two surfaces in contact?",
+      choices: ["Gravity", "Friction", "Tension", "Magnetism"],
+      correct: 2
+    },
+    {
+      text: "If an object's velocity does not change, its acceleration is:",
+      choices: ["Increasing", "Zero", "Negative", "Maximum"],
+      correct: 2
+    },
+    {
+      text: "Energy from the Sun reaches Earth mainly by:",
+      choices: ["Sound", "Radiation", "Conduction", "Convection"],
+      correct: 2
     }
   ],
 
@@ -453,6 +747,56 @@ Physics: {
       text: "What is the relationship in Ohm's Law between voltage (V), current (I), and resistance (R)?",
       choices: ["V = I / R", "V = I x R", "V = R / I", "V = I + R"],
       correct: 2
+    },
+    {
+      text: "The number of complete waves passing a point each second is the:",
+      choices: ["Wavelength", "Frequency", "Amplitude", "Period"],
+      correct: 2
+    },
+    {
+      text: "Which unit measures frequency?",
+      choices: ["Hertz", "Joule", "Watt", "Newton"],
+      correct: 1
+    },
+    {
+      text: "Kinetic energy is calculated using which formula?",
+      choices: ["mgh", "½mv²", "mv", "Fd"],
+      correct: 2
+    },
+    {
+      text: "In a series circuit, the current is:",
+      choices: ["Different at each point", "The same throughout", "Always zero", "Always increasing"],
+      correct: 2
+    },
+    {
+      text: "The bending of light as it passes from one medium into another is called:",
+      choices: ["Reflection", "Refraction", "Diffraction", "Absorption"],
+      correct: 2
+    },
+    {
+      text: "Electric power is calculated as:",
+      choices: ["V × I", "V / I", "I / V", "V + I"],
+      correct: 1
+    },
+    {
+      text: "What type of wave is a sound wave?",
+      choices: ["Transverse", "Longitudinal", "Electromagnetic", "Surface"],
+      correct: 2
+    },
+    {
+      text: "Gravitational potential energy depends on mass, gravity, and:",
+      choices: ["Speed", "Height", "Charge", "Volume"],
+      correct: 2
+    },
+    {
+      text: "Doubling the voltage across a fixed resistance will:",
+      choices: ["Halve the current", "Double the current", "Not change the current", "Stop the current"],
+      correct: 2
+    },
+    {
+      text: "Which color of visible light has the longest wavelength?",
+      choices: ["Blue", "Green", "Red", "Violet"],
+      correct: 3
     }
   ]
 }, // Physics
@@ -483,6 +827,56 @@ Geology: {
       text: "What process changes one rock type into another through heat and pressure?",
       choices: ["Erosion", "Weathering", "Metamorphism", "Deposition"],
       correct: 3
+    },
+    {
+      text: "What is the hot molten rock beneath Earth's surface called?",
+      choices: ["Lava", "Magma", "Sediment", "Ash"],
+      correct: 2
+    },
+    {
+      text: "What is molten rock that has reached the surface called?",
+      choices: ["Magma", "Lava", "Crust", "Granite"],
+      correct: 2
+    },
+    {
+      text: "Which is the innermost layer of the Earth?",
+      choices: ["Crust", "Mantle", "Core", "Lithosphere"],
+      correct: 3
+    },
+    {
+      text: "A scientist who studies rocks and the Earth is a:",
+      choices: ["Biologist", "Geologist", "Chemist", "Astronomer"],
+      correct: 2
+    },
+    {
+      text: "Which of these is a fossil fuel?",
+      choices: ["Water", "Coal", "Granite", "Sand"],
+      correct: 2
+    },
+    {
+      text: "What natural event is caused by the sudden movement of Earth's plates?",
+      choices: ["Tornado", "Earthquake", "Flood", "Drought"],
+      correct: 2
+    },
+    {
+      text: "Which metamorphic rock is commonly used to make statues?",
+      choices: ["Marble", "Sandstone", "Basalt", "Coal"],
+      correct: 1
+    },
+    {
+      text: "What do we call the loose surface material in which plants grow?",
+      choices: ["Rock", "Soil", "Lava", "Mineral"],
+      correct: 2
+    },
+    {
+      text: "An opening in Earth's crust that erupts lava is a:",
+      choices: ["Geyser", "Volcano", "Canyon", "Glacier"],
+      correct: 2
+    },
+    {
+      text: "Which of these is a natural solid with a definite chemical makeup?",
+      choices: ["Mineral", "Wood", "Plastic", "Glass"],
+      correct: 1
     }
   ],
 
@@ -510,6 +904,56 @@ Geology: {
     {
       text: "What instrument is used to measure the strength of an earthquake?",
       choices: ["Barometer", "Seismograph", "Thermometer", "Anemometer"],
+      correct: 2
+    },
+    {
+      text: "The rigid outer shell of Earth (crust and upper mantle) is the:",
+      choices: ["Asthenosphere", "Lithosphere", "Mesosphere", "Core"],
+      correct: 2
+    },
+    {
+      text: "Which scale is used to measure the magnitude of an earthquake?",
+      choices: ["Richter scale", "Mohs scale", "Celsius scale", "pH scale"],
+      correct: 1
+    },
+    {
+      text: "The Mohs scale measures a mineral's:",
+      choices: ["Color", "Hardness", "Weight", "Age"],
+      correct: 2
+    },
+    {
+      text: "Molten rock that cools slowly underground forms rocks with:",
+      choices: ["Large crystals", "No crystals", "Layers", "Fossils"],
+      correct: 1
+    },
+    {
+      text: "The point on Earth's surface directly above an earthquake's origin is the:",
+      choices: ["Focus", "Epicenter", "Fault", "Ridge"],
+      correct: 2
+    },
+    {
+      text: "Which agent of erosion slowly carves out valleys as it moves?",
+      choices: ["Wind", "Glacier", "Sunlight", "Gravity"],
+      correct: 2
+    },
+    {
+      text: "The continuous process by which rocks change from one type to another is the:",
+      choices: ["Water cycle", "Rock cycle", "Carbon cycle", "Nitrogen cycle"],
+      correct: 2
+    },
+    {
+      text: "A crack in Earth's crust where movement occurs is called a:",
+      choices: ["Fault", "Fold", "Vent", "Ridge"],
+      correct: 1
+    },
+    {
+      text: "Layers of sedimentary rock are called:",
+      choices: ["Strata", "Magma", "Plates", "Faults"],
+      correct: 1
+    },
+    {
+      text: "Which type of rock most commonly contains fossils?",
+      choices: ["Igneous", "Sedimentary", "Metamorphic", "Volcanic"],
       correct: 2
     }
   ],
@@ -544,6 +988,56 @@ Geology: {
         "Epoch > Period > Era > Eon"
       ],
       correct: 1
+    },
+    {
+      text: "When an oceanic plate sinks beneath another plate, the process is called:",
+      choices: ["Subduction", "Rifting", "Faulting", "Erosion"],
+      correct: 1
+    },
+    {
+      text: "The theory that continents were once joined as a single landmass is:",
+      choices: ["Plate tectonics", "Continental drift", "Seafloor spreading", "Isostasy"],
+      correct: 2
+    },
+    {
+      text: "Which scientist proposed the theory of continental drift?",
+      choices: ["Alfred Wegener", "Charles Darwin", "Isaac Newton", "Charles Lyell"],
+      correct: 1
+    },
+    {
+      text: "S-waves (secondary seismic waves) cannot travel through:",
+      choices: ["Solids", "Liquids", "The crust", "The mantle"],
+      correct: 2
+    },
+    {
+      text: "New oceanic crust forms at mid-ocean ridges through:",
+      choices: ["Subduction", "Seafloor spreading", "Weathering", "Deposition"],
+      correct: 2
+    },
+    {
+      text: "The lowest layer of undisturbed sedimentary rock being the oldest is the law of:",
+      choices: ["Superposition", "Uniformitarianism", "Original horizontality", "Faunal succession"],
+      correct: 1
+    },
+    {
+      text: "The convection currents that move tectonic plates occur in the:",
+      choices: ["Crust", "Mantle", "Inner core", "Atmosphere"],
+      correct: 2
+    },
+    {
+      text: "Which radioactive isotope is commonly used to date once-living material?",
+      choices: ["Carbon-14", "Uranium-238", "Potassium-40", "Lead-206"],
+      correct: 1
+    },
+    {
+      text: "Mountains formed when crust is compressed and folded are called:",
+      choices: ["Fault-block mountains", "Fold mountains", "Volcanic mountains", "Dome mountains"],
+      correct: 2
+    },
+    {
+      text: "A half-life is the time needed for half of a radioactive sample to:",
+      choices: ["Decay", "Double", "Melt", "Crystallize"],
+      correct: 1
     }
   ]
 }, // Geology
@@ -574,6 +1068,56 @@ Arithmetic: {
       text: "Which fraction is equal to 0.75?",
       choices: ["1/4", "2/3", "3/4", "4/5"],
       correct: 3
+    },
+    {
+      text: "What is 25% of 80?",
+      choices: ["15", "20", "25", "40"],
+      correct: 2
+    },
+    {
+      text: "What is 3/4 + 1/4?",
+      choices: ["1/2", "1", "4/8", "2"],
+      correct: 2
+    },
+    {
+      text: "What is 9 × 6?",
+      choices: ["45", "54", "63", "56"],
+      correct: 2
+    },
+    {
+      text: "What is 144 ÷ 12?",
+      choices: ["10", "11", "12", "14"],
+      correct: 3
+    },
+    {
+      text: "Round 4,678 to the nearest hundred.",
+      choices: ["4,600", "4,700", "4,680", "5,000"],
+      correct: 2
+    },
+    {
+      text: "What is the value of 7²?",
+      choices: ["14", "49", "21", "77"],
+      correct: 2
+    },
+    {
+      text: "Which of these numbers is prime?",
+      choices: ["9", "15", "17", "21"],
+      correct: 3
+    },
+    {
+      text: "What is 1/2 of 60?",
+      choices: ["20", "25", "30", "35"],
+      correct: 3
+    },
+    {
+      text: "What is -8 - 5?",
+      choices: ["-3", "-13", "13", "3"],
+      correct: 2
+    },
+    {
+      text: "What is 0.5 written as a percent?",
+      choices: ["5%", "50%", "0.5%", "500%"],
+      correct: 2
     }
   ],
 
@@ -602,6 +1146,56 @@ Arithmetic: {
       text: "What is the value of 2⁵?",
       choices: ["10", "16", "25", "32"],
       correct: 4
+    },
+    {
+      text: "What is 40% of 250?",
+      choices: ["80", "100", "120", "125"],
+      correct: 2
+    },
+    {
+      text: "What is the value of 3³ + 4²?",
+      choices: ["27", "43", "35", "25"],
+      correct: 2
+    },
+    {
+      text: "Simplify 18/24 to lowest terms.",
+      choices: ["3/4", "2/3", "6/8", "9/12"],
+      correct: 1
+    },
+    {
+      text: "What is 2/3 of 90?",
+      choices: ["30", "45", "60", "72"],
+      correct: 3
+    },
+    {
+      text: "Evaluate: 12 + 8 ÷ 4",
+      choices: ["5", "14", "20", "32"],
+      correct: 2
+    },
+    {
+      text: "What is √64?",
+      choices: ["6", "7", "8", "32"],
+      correct: 3
+    },
+    {
+      text: "What is -15 ÷ 3?",
+      choices: ["-5", "5", "-45", "-12"],
+      correct: 1
+    },
+    {
+      text: "Convert 3/5 to a decimal.",
+      choices: ["0.35", "0.6", "0.53", "1.67"],
+      correct: 2
+    },
+    {
+      text: "What is 5! (5 factorial)?",
+      choices: ["25", "60", "120", "720"],
+      correct: 3
+    },
+    {
+      text: "A number increased by 30% becomes 130. What was the original number?",
+      choices: ["90", "100", "110", "91"],
+      correct: 2
     }
   ],
 
@@ -629,6 +1223,56 @@ Arithmetic: {
     {
       text: "What is √144 + √81?",
       choices: ["15", "21", "25", "17"],
+      correct: 2
+    },
+    {
+      text: "Compute: 15 − 3 × 2 + 8 ÷ 4",
+      choices: ["26", "11", "13", "7"],
+      correct: 2
+    },
+    {
+      text: "What is 20% of 20% of 500?",
+      choices: ["20", "50", "100", "200"],
+      correct: 1
+    },
+    {
+      text: "What is the simple interest on ₱8,000 at 6% per year for 3 years?",
+      choices: ["₱1,200", "₱1,440", "₱480", "₱2,400"],
+      correct: 2
+    },
+    {
+      text: "If 5 pencils cost ₱35, how much do 8 pencils cost?",
+      choices: ["₱48", "₱56", "₱63", "₱40"],
+      correct: 2
+    },
+    {
+      text: "What is 2⁶ ÷ 2³?",
+      choices: ["2", "4", "8", "16"],
+      correct: 3
+    },
+    {
+      text: "On a map, 1 cm represents 50 km. How many km does 4 cm represent?",
+      choices: ["100", "150", "200", "250"],
+      correct: 3
+    },
+    {
+      text: "Increase 80 by 25%, then decrease the result by 20%. The answer is:",
+      choices: ["76", "80", "84", "100"],
+      correct: 2
+    },
+    {
+      text: "What is the average of 12, 18, and 24?",
+      choices: ["16", "18", "20", "54"],
+      correct: 2
+    },
+    {
+      text: "A jacket costs ₱1,200 after a 25% discount. What was the original price?",
+      choices: ["₱1,500", "₱1,600", "₱1,450", "₱1,000"],
+      correct: 2
+    },
+    {
+      text: "What is 7/8 expressed as a percent?",
+      choices: ["78%", "87.5%", "85%", "80%"],
       correct: 2
     }
   ]
@@ -660,6 +1304,56 @@ Algebra: {
       text: "Solve for n: 2n = 18",
       choices: ["7", "8", "9", "36"],
       correct: 3
+    },
+    {
+      text: "Solve for x: x - 4 = 10",
+      choices: ["6", "14", "40", "-6"],
+      correct: 2
+    },
+    {
+      text: "Simplify: 7a - 2a",
+      choices: ["5a", "9a", "5", "14a"],
+      correct: 1
+    },
+    {
+      text: "If x = 5, what is 2x + 3?",
+      choices: ["10", "13", "16", "7"],
+      correct: 2
+    },
+    {
+      text: "Solve for x: 5x = 45",
+      choices: ["5", "8", "9", "40"],
+      correct: 3
+    },
+    {
+      text: "Simplify: 4b + 3 + 2b",
+      choices: ["6b + 3", "9b", "6b", "5b + 3"],
+      correct: 1
+    },
+    {
+      text: "What is the coefficient of x in the term 7x?",
+      choices: ["1", "7", "x", "0"],
+      correct: 2
+    },
+    {
+      text: "Solve for y: y / 3 = 6",
+      choices: ["2", "9", "18", "3"],
+      correct: 3
+    },
+    {
+      text: "If a = 2 and b = 3, what is a + 2b?",
+      choices: ["7", "8", "10", "5"],
+      correct: 2
+    },
+    {
+      text: "Solve for x: x + 12 = 20",
+      choices: ["6", "8", "32", "-8"],
+      correct: 2
+    },
+    {
+      text: "Simplify: 10x - 4x + x",
+      choices: ["5x", "6x", "7x", "15x"],
+      correct: 3
     }
   ],
 
@@ -688,6 +1382,56 @@ Algebra: {
       text: "Solve the system: x + y = 10 and x − y = 4. What is x?",
       choices: ["3", "5", "6", "7"],
       correct: 4
+    },
+    {
+      text: "Solve for x: 3x + 4 = 19",
+      choices: ["3", "5", "7", "15"],
+      correct: 2
+    },
+    {
+      text: "Simplify: 2(x + 5)",
+      choices: ["2x + 5", "2x + 10", "x + 10", "2x + 7"],
+      correct: 2
+    },
+    {
+      text: "What is the y-intercept of the line y = 2x - 3?",
+      choices: ["2", "-3", "3", "0"],
+      correct: 2
+    },
+    {
+      text: "Factor: x² + 7x + 12",
+      choices: ["(x + 3)(x + 4)", "(x + 2)(x + 6)", "(x + 1)(x + 12)", "(x - 3)(x - 4)"],
+      correct: 1
+    },
+    {
+      text: "Solve for x: (x / 2) + 3 = 7",
+      choices: ["2", "5", "8", "14"],
+      correct: 3
+    },
+    {
+      text: "Simplify: (3x²)(2x³)",
+      choices: ["5x⁵", "6x⁵", "6x⁶", "5x⁶"],
+      correct: 2
+    },
+    {
+      text: "Evaluate 2x² when x = 3.",
+      choices: ["12", "18", "36", "6"],
+      correct: 2
+    },
+    {
+      text: "Solve for x: 4x - 3 = 2x + 7",
+      choices: ["2", "5", "4", "10"],
+      correct: 2
+    },
+    {
+      text: "What is the slope of the line through the points (0, 1) and (2, 5)?",
+      choices: ["1", "2", "3", "4"],
+      correct: 2
+    },
+    {
+      text: "Expand: (x - 4)(x + 4)",
+      choices: ["x² - 16", "x² + 16", "x² - 8x - 16", "x² - 8"],
+      correct: 1
     }
   ],
 
@@ -716,6 +1460,56 @@ Algebra: {
       text: "Simplify: (x³ · x⁴) ÷ x²",
       choices: ["x⁵", "x⁹", "x⁶", "x³"],
       correct: 1
+    },
+    {
+      text: "What are the roots of x² - 9 = 0?",
+      choices: ["3 and -3", "9 and -9", "0 and 9", "only 3"],
+      correct: 1
+    },
+    {
+      text: "Solve the quadratic: x² + x - 6 = 0",
+      choices: ["2 and -3", "-2 and 3", "1 and 6", "-1 and -6"],
+      correct: 1
+    },
+    {
+      text: "If f(x) = 3x + 1, what is f(-2)?",
+      choices: ["-5", "-7", "7", "5"],
+      correct: 1
+    },
+    {
+      text: "What is the discriminant (b² - 4ac) of x² - 4x + 4 = 0?",
+      choices: ["0", "4", "8", "-16"],
+      correct: 1
+    },
+    {
+      text: "Simplify: (2x³y²)³",
+      choices: ["6x⁹y⁶", "8x⁹y⁶", "8x⁶y⁵", "6x⁶y⁶"],
+      correct: 2
+    },
+    {
+      text: "The vertex form y = a(x - h)² + k has its vertex at:",
+      choices: ["(h, k)", "(-h, k)", "(h, -k)", "(k, h)"],
+      correct: 1
+    },
+    {
+      text: "Solve for x: 2ˣ = 16",
+      choices: ["2", "3", "4", "8"],
+      correct: 3
+    },
+    {
+      text: "What is the axis of symmetry of y = x² - 6x + 8?",
+      choices: ["x = 3", "x = -3", "x = 6", "x = 8"],
+      correct: 1
+    },
+    {
+      text: "Factor completely: 2x² - 8",
+      choices: ["2(x² - 4)", "2(x - 2)(x + 2)", "(2x - 4)(x + 2)", "(x - 2)(x + 4)"],
+      correct: 2
+    },
+    {
+      text: "If x² = 49, then x =",
+      choices: ["7 only", "-7 only", "±7", "±14"],
+      correct: 3
     }
   ]
 }, // Algebra
@@ -746,6 +1540,56 @@ Geometry: {
       text: "A triangle with all three sides equal is called:",
       choices: ["Scalene", "Isosceles", "Right", "Equilateral"],
       correct: 4
+    },
+    {
+      text: "How many sides does a hexagon have?",
+      choices: ["5", "6", "7", "8"],
+      correct: 2
+    },
+    {
+      text: "What is the perimeter of a rectangle 10 cm long and 4 cm wide?",
+      choices: ["14 cm", "28 cm", "40 cm", "20 cm"],
+      correct: 2
+    },
+    {
+      text: "A closed figure with three sides is a:",
+      choices: ["Square", "Triangle", "Circle", "Pentagon"],
+      correct: 2
+    },
+    {
+      text: "How many degrees are in a straight angle?",
+      choices: ["90°", "180°", "270°", "360°"],
+      correct: 2
+    },
+    {
+      text: "What is the area of a square with side 5 cm?",
+      choices: ["10 cm²", "20 cm²", "25 cm²", "50 cm²"],
+      correct: 3
+    },
+    {
+      text: "A polygon with four equal sides and four right angles is a:",
+      choices: ["Rectangle", "Rhombus", "Square", "Trapezoid"],
+      correct: 3
+    },
+    {
+      text: "How many degrees are in a full circle?",
+      choices: ["90°", "180°", "270°", "360°"],
+      correct: 4
+    },
+    {
+      text: "What do you call an angle less than 90°?",
+      choices: ["Acute", "Obtuse", "Right", "Straight"],
+      correct: 1
+    },
+    {
+      text: "How many sides does a pentagon have?",
+      choices: ["4", "5", "6", "7"],
+      correct: 2
+    },
+    {
+      text: "The distance around a circle is called its:",
+      choices: ["Area", "Radius", "Circumference", "Diameter"],
+      correct: 3
     }
   ],
 
@@ -774,6 +1618,56 @@ Geometry: {
       text: "Two triangles with the same shape but different sizes are:",
       choices: ["Congruent", "Similar", "Equal", "Symmetric"],
       correct: 2
+    },
+    {
+      text: "An angle greater than 90° but less than 180° is:",
+      choices: ["Acute", "Right", "Obtuse", "Straight"],
+      correct: 3
+    },
+    {
+      text: "Two angles that add up to 90° are called:",
+      choices: ["Complementary", "Supplementary", "Vertical", "Adjacent"],
+      correct: 1
+    },
+    {
+      text: "What is the area of a circle with radius 5? (use π ≈ 3.14)",
+      choices: ["15.7", "31.4", "78.5", "25"],
+      correct: 3
+    },
+    {
+      text: "The Pythagorean theorem is written as:",
+      choices: ["a + b = c", "a² + b² = c²", "a² - b² = c²", "ab = c²"],
+      correct: 2
+    },
+    {
+      text: "A right triangle has legs 6 and 8. The hypotenuse is:",
+      choices: ["10", "12", "14", "48"],
+      correct: 1
+    },
+    {
+      text: "How many degrees is each interior angle of an equilateral triangle?",
+      choices: ["45°", "60°", "90°", "120°"],
+      correct: 2
+    },
+    {
+      text: "What is the perimeter of a circle called?",
+      choices: ["Diameter", "Radius", "Circumference", "Arc"],
+      correct: 3
+    },
+    {
+      text: "Triangles that are exactly the same shape and size are:",
+      choices: ["Similar", "Congruent", "Scalene", "Right"],
+      correct: 2
+    },
+    {
+      text: "The longest side of a right triangle is the:",
+      choices: ["Base", "Leg", "Hypotenuse", "Altitude"],
+      correct: 3
+    },
+    {
+      text: "What is the area of a parallelogram with base 8 and height 5?",
+      choices: ["13", "26", "40", "80"],
+      correct: 3
     }
   ],
 
@@ -801,6 +1695,56 @@ Geometry: {
     {
       text: "The distance from the center of a circle to any point on the circle is the:",
       choices: ["Diameter", "Chord", "Radius", "Arc"],
+      correct: 3
+    },
+    {
+      text: "What is the area of a circle with radius 7, using π ≈ 22/7?",
+      choices: ["22", "44", "154", "49"],
+      correct: 3
+    },
+    {
+      text: "The sum of the interior angles of a pentagon is:",
+      choices: ["360°", "450°", "540°", "720°"],
+      correct: 3
+    },
+    {
+      text: "In a right triangle, the ratio of the adjacent side to the hypotenuse is:",
+      choices: ["Sine", "Cosine", "Tangent", "Cotangent"],
+      correct: 2
+    },
+    {
+      text: "What is the volume of a rectangular box measuring 2 × 3 × 4?",
+      choices: ["9", "24", "12", "18"],
+      correct: 2
+    },
+    {
+      text: "The value of sin 30° is:",
+      choices: ["0", "0.5", "1", "√3"],
+      correct: 2
+    },
+    {
+      text: "The surface area of a cube with edge length 3 is:",
+      choices: ["9", "27", "54", "18"],
+      correct: 3
+    },
+    {
+      text: "A segment through the center of a circle with both endpoints on the circle is the:",
+      choices: ["Radius", "Chord", "Diameter", "Tangent"],
+      correct: 3
+    },
+    {
+      text: "The measure of each interior angle of a regular hexagon is:",
+      choices: ["108°", "120°", "135°", "144°"],
+      correct: 2
+    },
+    {
+      text: "Using the distance formula, the distance between (0, 0) and (3, 4) is:",
+      choices: ["5", "7", "12", "25"],
+      correct: 1
+    },
+    {
+      text: "The value of tan 45° is:",
+      choices: ["0", "0.5", "1", "√2"],
       correct: 3
     }
   ]
@@ -832,6 +1776,56 @@ Literature: {
       text: "A story passed down that explains nature or beliefs, often with gods or heroes, is a:",
       choices: ["Biography", "Myth", "News article", "Essay"],
       correct: 2
+    },
+    {
+      text: "A comparison using the words \"like\" or \"as\" is a:",
+      choices: ["Metaphor", "Simile", "Idiom", "Pun"],
+      correct: 2
+    },
+    {
+      text: "The person who tells the story is the:",
+      choices: ["Author", "Narrator", "Character", "Editor"],
+      correct: 2
+    },
+    {
+      text: "The struggle between opposing forces in a story is the:",
+      choices: ["Theme", "Setting", "Conflict", "Mood"],
+      correct: 3
+    },
+    {
+      text: "A short story that teaches a moral lesson, often using animals, is a:",
+      choices: ["Fable", "Novel", "Essay", "Poem"],
+      correct: 1
+    },
+    {
+      text: "Words that imitate sounds, like \"buzz\" or \"bang,\" are examples of:",
+      choices: ["Simile", "Metaphor", "Onomatopoeia", "Rhyme"],
+      correct: 3
+    },
+    {
+      text: "The villain or character who opposes the hero is the:",
+      choices: ["Protagonist", "Antagonist", "Narrator", "Author"],
+      correct: 2
+    },
+    {
+      text: "A group of lines in a poem is called a:",
+      choices: ["Stanza", "Chapter", "Paragraph", "Sentence"],
+      correct: 1
+    },
+    {
+      text: "\"The stars danced in the sky\" gives the stars human qualities. This is:",
+      choices: ["Simile", "Hyperbole", "Personification", "Irony"],
+      correct: 3
+    },
+    {
+      text: "The feeling or atmosphere a story creates in the reader is its:",
+      choices: ["Plot", "Mood", "Setting", "Theme"],
+      correct: 2
+    },
+    {
+      text: "A long, made-up story written in prose is called a:",
+      choices: ["Novel", "Biography", "Report", "Diary"],
+      correct: 1
     }
   ],
 
@@ -860,6 +1854,56 @@ Literature: {
       text: "The central message or lesson of a literary work is its:",
       choices: ["Plot", "Setting", "Theme", "Tone"],
       correct: 3
+    },
+    {
+      text: "An exaggeration for effect, like \"I've told you a million times,\" is:",
+      choices: ["Simile", "Hyperbole", "Metaphor", "Irony"],
+      correct: 2
+    },
+    {
+      text: "A comparison that says one thing IS another, without \"like\" or \"as,\" is a:",
+      choices: ["Simile", "Metaphor", "Pun", "Idiom"],
+      correct: 2
+    },
+    {
+      text: "The introduction that gives background at the start of a story is the:",
+      choices: ["Climax", "Exposition", "Resolution", "Falling action"],
+      correct: 2
+    },
+    {
+      text: "A reference to another well-known work, person, or event is an:",
+      choices: ["Allusion", "Illusion", "Analogy", "Anecdote"],
+      correct: 1
+    },
+    {
+      text: "The repetition of beginning consonant sounds in nearby words is:",
+      choices: ["Rhyme", "Alliteration", "Assonance", "Meter"],
+      correct: 2
+    },
+    {
+      text: "A three-line Japanese poem with a 5-7-5 syllable pattern is a:",
+      choices: ["Sonnet", "Haiku", "Limerick", "Ballad"],
+      correct: 2
+    },
+    {
+      text: "The part after the climax where conflicts are resolved is the:",
+      choices: ["Rising action", "Resolution", "Exposition", "Climax"],
+      correct: 2
+    },
+    {
+      text: "Descriptive language that appeals to the five senses is called:",
+      choices: ["Imagery", "Irony", "Symbolism", "Dialogue"],
+      correct: 1
+    },
+    {
+      text: "A conversation between two or more characters in a story is called:",
+      choices: ["Monologue", "Dialogue", "Narration", "Soliloquy"],
+      correct: 2
+    },
+    {
+      text: "The attitude a writer takes toward a subject is the work's:",
+      choices: ["Tone", "Plot", "Setting", "Rhyme"],
+      correct: 1
     }
   ],
 
@@ -887,6 +1931,56 @@ Literature: {
     {
       text: "The narrator who uses \"I\" and takes part in the story is written in:",
       choices: ["First person", "Second person", "Third person limited", "Third person omniscient"],
+      correct: 1
+    },
+    {
+      text: "A contrast between what is expected and what actually happens is:",
+      choices: ["Situational irony", "Verbal irony", "Dramatic irony", "Foreshadowing"],
+      correct: 1
+    },
+    {
+      text: "When a character says the opposite of what they truly mean, it is:",
+      choices: ["Situational irony", "Verbal irony", "Dramatic irony", "Imagery"],
+      correct: 2
+    },
+    {
+      text: "An object that stands for a larger idea is an example of:",
+      choices: ["Imagery", "Symbolism", "Alliteration", "Meter"],
+      correct: 2
+    },
+    {
+      text: "A long speech by one character alone on stage, revealing their thoughts, is a:",
+      choices: ["Dialogue", "Monologue", "Soliloquy", "Aside"],
+      correct: 3
+    },
+    {
+      text: "The narrator who knows the thoughts of all characters is:",
+      choices: ["First person", "Third person limited", "Third person omniscient", "Second person"],
+      correct: 3
+    },
+    {
+      text: "A recurring idea, image, or symbol that develops a theme is a:",
+      choices: ["Motif", "Plot", "Setting", "Climax"],
+      correct: 1
+    },
+    {
+      text: "The emotional release an audience feels at the end of a tragedy is called:",
+      choices: ["Catharsis", "Climax", "Denouement", "Hubris"],
+      correct: 1
+    },
+    {
+      text: "In a tragedy, the hero's excessive pride that leads to their downfall is called:",
+      choices: ["Hubris", "Catharsis", "Irony", "Motif"],
+      correct: 1
+    },
+    {
+      text: "A character who contrasts with another to highlight certain qualities is a:",
+      choices: ["Foil", "Protagonist", "Narrator", "Antagonist"],
+      correct: 1
+    },
+    {
+      text: "The overall structure or sequence of events in a narrative is the:",
+      choices: ["Plot", "Tone", "Diction", "Rhyme"],
       correct: 1
     }
   ]
@@ -918,6 +2012,56 @@ Grammar: {
       text: "Which pronoun replaces \"Maria\" in a sentence?",
       choices: ["He", "She", "It", "They"],
       correct: 2
+    },
+    {
+      text: "Which word is a verb: \"The bird sings sweetly\"?",
+      choices: ["bird", "sings", "sweetly", "the"],
+      correct: 2
+    },
+    {
+      text: "What is the plural of \"child\"?",
+      choices: ["childs", "children", "childes", "child"],
+      correct: 2
+    },
+    {
+      text: "Which of these is a proper noun?",
+      choices: ["city", "river", "Manila", "mountain"],
+      correct: 3
+    },
+    {
+      text: "Choose the correct article: \"___ apple a day keeps the doctor away.\"",
+      choices: ["A", "An", "The", "No article"],
+      correct: 2
+    },
+    {
+      text: "Which word is a conjunction: \"I like tea and coffee\"?",
+      choices: ["like", "tea", "and", "coffee"],
+      correct: 3
+    },
+    {
+      text: "What punctuation mark ends an exclamatory sentence?",
+      choices: ["Period", "Question mark", "Exclamation point", "Comma"],
+      correct: 3
+    },
+    {
+      text: "Choose the correct pronoun: \"___ are going to the park.\" (a group)",
+      choices: ["I", "He", "They", "She"],
+      correct: 3
+    },
+    {
+      text: "Which word is an adverb: \"She sings beautifully\"?",
+      choices: ["She", "sings", "beautifully", "song"],
+      correct: 3
+    },
+    {
+      text: "The plural of \"box\" is:",
+      choices: ["boxs", "boxes", "boxen", "box"],
+      correct: 2
+    },
+    {
+      text: "Which sentence is correct?",
+      choices: ["He don't like it.", "He doesn't like it.", "He not like it.", "He no like it."],
+      correct: 2
     }
   ],
 
@@ -946,6 +2090,56 @@ Grammar: {
       text: "Which word is an adverb: \"He ran quickly to the store\"?",
       choices: ["ran", "quickly", "store", "he"],
       correct: 2
+    },
+    {
+      text: "What is the past tense of \"go\"?",
+      choices: ["goed", "went", "gone", "going"],
+      correct: 2
+    },
+    {
+      text: "Choose the correct word: \"She is taller ___ her brother.\"",
+      choices: ["then", "than", "that", "them"],
+      correct: 2
+    },
+    {
+      text: "Which sentence is grammatically correct?",
+      choices: ["Me and him went.", "He and I went.", "Him and me went.", "I and him went."],
+      correct: 2
+    },
+    {
+      text: "Identify the subject: \"The tall boy ran home.\"",
+      choices: ["The", "tall", "boy", "ran"],
+      correct: 3
+    },
+    {
+      text: "Which word is a preposition: \"The cat sat under the table\"?",
+      choices: ["cat", "sat", "under", "table"],
+      correct: 3
+    },
+    {
+      text: "The past participle of \"eat\" is:",
+      choices: ["ate", "eaten", "eating", "eats"],
+      correct: 2
+    },
+    {
+      text: "Choose the correct verb: \"The children ___ playing.\"",
+      choices: ["is", "was", "are", "has"],
+      correct: 3
+    },
+    {
+      text: "What part of speech is the word \"quickly\"?",
+      choices: ["Noun", "Verb", "Adjective", "Adverb"],
+      correct: 4
+    },
+    {
+      text: "Choose the correct possessive: \"That is ___ book.\" (belonging to it)",
+      choices: ["its", "it's", "its'", "it"],
+      correct: 1
+    },
+    {
+      text: "Choose the correct form: \"I have ___ my homework.\"",
+      choices: ["did", "do", "done", "doing"],
+      correct: 3
     }
   ],
 
@@ -989,6 +2183,61 @@ Grammar: {
       text: "What is the correct plural of \"analysis\"?",
       choices: ["analysises", "analysis", "analyses", "analysi"],
       correct: 3
+    },
+    {
+      text: "Which sentence has correct subject-verb agreement?",
+      choices: ["The team are winning.", "The team is winning.", "The team be winning.", "The team am winning."],
+      correct: 2
+    },
+    {
+      text: "Which of these is a conjunctive adverb?",
+      choices: ["and", "however", "but", "or"],
+      correct: 2
+    },
+    {
+      text: "\"Running down the street, the bus was missed by John.\" This contains a:",
+      choices: ["Split infinitive", "Dangling modifier", "Comma splice", "Run-on sentence"],
+      correct: 2
+    },
+    {
+      text: "Choose the correctly written sentence:",
+      choices: [
+        "Their going to they're house over there.",
+        "They're going to their house over there.",
+        "There going to their house over their.",
+        "Their going to their house over there."
+      ],
+      correct: 2
+    },
+    {
+      text: "Which sentence contains a comma splice?",
+      choices: ["I came; I saw.", "I came, I saw, I conquered.", "I came and I saw.", "I came. I saw."],
+      correct: 2
+    },
+    {
+      text: "An independent clause is one that:",
+      choices: ["cannot stand alone", "can stand alone as a sentence", "has no verb", "is always a question"],
+      correct: 2
+    },
+    {
+      text: "Choose the correct word: \"The committee will announce ___ decision.\"",
+      choices: ["it's", "its", "their", "its'"],
+      correct: 2
+    },
+    {
+      text: "Which word is the gerund in \"Swimming is fun\"?",
+      choices: ["is", "fun", "Swimming", "none"],
+      correct: 3
+    },
+    {
+      text: "What is the superlative form of \"good\"?",
+      choices: ["gooder", "goodest", "better", "best"],
+      correct: 4
+    },
+    {
+      text: "Which word is a subordinating conjunction?",
+      choices: ["and", "but", "because", "or"],
+      correct: 3
     }
   ]
 } // Grammar
@@ -1014,40 +2263,65 @@ function saveProgressToServer(completedTopics) {
   }).catch(() => {}); // fire-and-forget, offline progress still lives in localStorage
 }
 
+function submitScoreToLeaderboard() {
+  // Automatic score submission at topic completion. Unlike saveProgressToServer,
+  // guests submit too — their guest name is stored in loggedInUser as well.
+  const name = localStorage.getItem("loggedInUser");
+  if (!name) return;
+  fetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify({ action: "addScore", name, score })
+  }).catch(() => {});
+}
+
 // ================= GEMINI QUESTION GENERATION =================
 // NOTE: this key is intentionally hardcoded client-side (accepted risk for a
 // static site, per project decision) — anyone viewing page source can read it.
-const GEMINI_API_KEY = "AQ.Ab8RN6KGlQuMcRf4ZBf3y8-D2VMeA-0gxbJT_6W33e-bpBSmog";
+const GEMINI_API_KEY = "AQ.Ab8RN6Jfbz4kU3dFHV2MlaP1m_sxa6FOP5XFwP4BTEwAUQ-bbw";
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
 
+// The pool is now 15 (5 per level). Accept >= 11 so a slightly short Gemini
+// response is still usable; anything smaller falls back to the offline bank.
 function validateQuestions(arr) {
-  return Array.isArray(arr) && arr.length === 5 && arr.every(q =>
+  return Array.isArray(arr) && arr.length >= 11 && arr.every(q =>
     q && typeof q.text === "string" &&
     Array.isArray(q.choices) && q.choices.length === 4 &&
     Number.isInteger(q.correct) && q.correct >= 1 && q.correct <= 4
   );
 }
 
+const GEMINI_TIMEOUT_MS = 5000;
+
 async function fetchGeminiQuestions(topic, grade) {
-  const prompt = `Generate exactly 5 multiple-choice ${selectedSubject} questions on the topic "${topic}" for a grade ${grade} student.
+  const prompt = `Generate exactly 15 multiple-choice ${selectedSubject} questions on the topic "${topic}" for a grade ${grade} student.
+All 15 must be distinct from one another — they will be split across three mini-levels, so variety matters.
 Respond with ONLY strict JSON, no markdown fences, matching exactly this shape:
 [{"text":"...", "choices":["...","...","...","..."], "correct":1}, ...]
-"correct" is a 1-indexed integer (1-4) pointing to the correct entry in "choices". Exactly 5 items, exactly 4 choices each.`;
+"correct" is a 1-indexed integer (1-4) pointing to the correct entry in "choices". Exactly 15 items, exactly 4 choices each.`;
 
-  const res = await fetch(GEMINI_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-  });
-  if (!res.ok) throw new Error("gemini_http_" + res.status);
+  // Abort if Gemini takes longer than 5s so a slow call falls back to the
+  // offline bank instead of leaving the player on the loading screen.
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), GEMINI_TIMEOUT_MS);
+  try {
+    const res = await fetch(GEMINI_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+      signal: controller.signal
+    });
+    if (!res.ok) throw new Error("gemini_http_" + res.status);
 
-  const data = await res.json();
-  const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-  const cleaned = raw.replace(/```json|```/g, "").trim();
-  const parsed = JSON.parse(cleaned);
+    const data = await res.json();
+    const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    const cleaned = raw.replace(/```json|```/g, "").trim();
+    const parsed = JSON.parse(cleaned);
 
-  if (!validateQuestions(parsed)) throw new Error("gemini_shape_invalid");
-  return parsed;
+    if (!validateQuestions(parsed)) throw new Error("gemini_shape_invalid");
+    return parsed;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 function pickFallback(topic, grade) {
@@ -1055,17 +2329,38 @@ function pickFallback(topic, grade) {
   return FALLBACK_BANKS[topic][tier];
 }
 
+function shuffleArray(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
 let activeQuestions = null;
 let loadFailed = false;
 let questionsSource = null; // "gemini" or "fallback"
 
+// Each of the 3 levels draws its own distinct 5-question slice of the pool, so
+// questions no longer carry over between levels. Pools are 15 (Gemini asks for
+// 15; every offline tier holds 15). The modulo keeps it safe if a pool ever
+// comes back smaller than 15.
+function questionsForLevel(level) {
+  const pool = activeQuestions || [];
+  if (!pool.length) return [];
+  const per = 5, start = (level - 1) * per;
+  const out = [];
+  for (let i = 0; i < per; i++) out.push(pool[(start + i) % pool.length]);
+  return out;
+}
+
 async function loadQuestions() {
   try {
-    activeQuestions = await fetchGeminiQuestions(selectedTopic, selectedGrade);
+    activeQuestions = shuffleArray(await fetchGeminiQuestions(selectedTopic, selectedGrade));
     questionsSource = "gemini";
   } catch (e) {
     if (FALLBACK_BANKS[selectedTopic]) {
-      activeQuestions = pickFallback(selectedTopic, selectedGrade);
+      activeQuestions = shuffleArray([...pickFallback(selectedTopic, selectedGrade)]);
       questionsSource = "fallback";
     } else {
       loadFailed = true;
@@ -1076,6 +2371,17 @@ async function loadQuestions() {
 // ================= SCORE =================
 let score = 0;
 const scoreEl = document.getElementById("score");
+
+// ================= LEVEL PROGRESSION =================
+// Each topic run is 3 levels: 1 = platformer, 2 = top-view maze, 3 = flappy.
+// Correct answers are worth more in later levels; score is cumulative across
+// the run and only resets when a fresh topic run starts. Dying mid-level
+// rolls score back to the checkpoint taken when that level was entered.
+const POINTS_PER_LEVEL = { 1: 1, 2: 2, 3: 3 };
+const LEVEL_NAMES = { 1: "Platformer", 2: "The Maze", 3: "Flappy Flight" };
+let currentLevel = 1;
+let levelStartScore = 0;
+const levelNumEl = document.getElementById("levelNum");
 
 // ================= IMAGES =================
 const chosenCharacter = localStorage.getItem("chosenCharacter") || "panpan";
@@ -1128,19 +2434,57 @@ function bindTouchButton(id, code) {
 bindTouchButton("touchLeft", "ArrowLeft");
 bindTouchButton("touchRight", "ArrowRight");
 bindTouchButton("touchJump", "Space");
+bindTouchButton("touchUp", "ArrowUp");
+bindTouchButton("touchDown", "ArrowDown");
 
 // ================= OBJECTS =================
 let platforms=[], spikes=[], questions=[];
 let finishLine=null;
-let cameraX=0;
+let cameraX=0, cameraY=0;
 let levelFinished=false;
 let isAsking=false;
 
-// ================= BUILD LEVEL =================
-function buildLevel(){
+// Maze (level 2, top-view)
+let walls=[], gates=[], mazeExit=null;
+let mazeW=0, mazeH=0;
+
+// Flappy (level 3)
+let pipes=[], flappyFinish=null, flappyHold=null, flappyCooldown=0, flapLatch=false;
+const FLAPPY_GRAVITY=0.45, FLAPPY_IMPULSE=-8.5, FLAPPY_SCROLL=3;
+
+function rectsOverlap(a,b){
+  return a.x < b.x + b.w && a.x + a.w > b.x &&
+         a.y < b.y + b.h && a.y + a.h > b.y;
+}
+
+// ================= BUILD LEVELS =================
+function buildCurrentLevel(){
+  // Fresh entry and mid-level deaths both land here: score rolls back to the
+  // checkpoint taken when this level was entered.
+  score = levelStartScore; scoreEl.textContent = score;
+  levelNumEl.textContent = currentLevel;
+  levelFinished = false;
   platforms=[]; spikes=[]; questions=[];
-  score=0; scoreEl.textContent=score;
-  levelFinished=false;
+  walls=[]; gates=[]; mazeExit=null;
+  pipes=[]; flappyFinish=null; flappyHold=null; flappyCooldown=0;
+  finishLine=null; cameraX=0; cameraY=0;
+
+  if (activeQuestions && activeQuestions.length >= 5) {
+    const s = (currentLevel - 1) * 5;
+    const slice = activeQuestions.splice(s, 5);
+    shuffleArray(slice);
+    activeQuestions.splice(s, 0, ...slice);
+  }
+
+  if (currentLevel === 1) buildPlatformerLevel();
+  else if (currentLevel === 2) buildMazeLevel();
+  else buildFlappyLevel();
+
+  clearKeys();
+}
+
+function buildPlatformerLevel(){
+  document.body.dataset.mode = "platformer";
   setLevelBackground();
 
   const groundY = canvas.height - 96;
@@ -1155,7 +2499,7 @@ function buildLevel(){
     spikes.push({x:px+80,y:py-32,w:40,h:24});
   }
 
-  (activeQuestions || []).forEach((q,i)=>{
+  questionsForLevel(1).forEach((q,i)=>{
     questions.push({
       x:400+i*300,
       y:groundY-220,
@@ -1168,7 +2512,79 @@ function buildLevel(){
   finishLine={x:levelWidth-40,y:groundY-120,w:20,h:120};
 
   Object.assign(player,{x:player.spawnX,y:player.spawnY,vx:0,vy:0});
-  clearKeys();
+}
+
+// Top-view maze map: `#` wall, `.` floor, `S` start, `E` exit, `G` question
+// gate (solid until its question is answered correctly). Walls/gates are
+// plain AABB rects so custom tile art later is a render-only swap.
+const MAZE_MAP = [
+  "#############",
+  "#S..#.......#",
+  "###G#.#####G#",
+  "#...#.#...#.#",
+  "#.###.#.#.#.#",
+  "#.#...#.#.G.#",
+  "#.#.###.###.#",
+  "#...#.....#E#",
+  "#############"
+];
+const MAZE_TILE = 80;
+
+function buildMazeLevel(){
+  document.body.dataset.mode = "maze";
+  // Seen from above: plain dark floor instead of the side-view topic sky.
+  document.body.style.backgroundImage = "none";
+  document.body.style.backgroundColor = "#141426";
+
+  mazeW = MAZE_MAP[0].length * MAZE_TILE;
+  mazeH = MAZE_MAP.length * MAZE_TILE;
+
+  const mazeQs = questionsForLevel(2);
+  let gateCount = 0;
+  MAZE_MAP.forEach((row, r) => {
+    [...row].forEach((cell, c) => {
+      const x = c*MAZE_TILE, y = r*MAZE_TILE;
+      if (cell === "#") walls.push({x, y, w:MAZE_TILE, h:MAZE_TILE});
+      else if (cell === "G") gates.push({
+        x, y, w:MAZE_TILE, h:MAZE_TILE, open:false, cooldown:0,
+        data: mazeQs[gateCount++ % mazeQs.length]
+      });
+      else if (cell === "E") mazeExit = {x:x+10, y:y+10, w:MAZE_TILE-20, h:MAZE_TILE-20};
+      else if (cell === "S") Object.assign(player, {
+        x: x + (MAZE_TILE - player.w)/2,
+        y: y + (MAZE_TILE - player.h)/2,
+        vx:0, vy:0
+      });
+    });
+  });
+
+  player.onGround = true; // keeps the sprite on walk/idle frames
+}
+
+function buildFlappyLevel(){
+  document.body.dataset.mode = "flappy";
+  setLevelBackground();
+
+  const groundY = canvas.height - 60;
+  // Easier tuning: wider gaps and more space between pipes.
+  const gapH = 220, pipeW = 70, spacing = 480;
+  const flappyQs = questionsForLevel(3);
+  let qi = 0;
+  for(let i=0;i<10;i++){
+    const isQ = (i+1) % 3 === 0 && flappyQs.length > 0;
+    const gapY = 90 + Math.random() * Math.max(80, groundY - gapH - 180);
+    pipes.push({
+      x: canvas.width + 200 + i*spacing,
+      w: pipeW, gapY, gapH,
+      question: isQ ? flappyQs[qi++ % flappyQs.length] : null,
+      barrier: isQ
+    });
+  }
+  flappyFinish = { x: canvas.width + 200 + 10*spacing + 150, w: 20 };
+
+  player.onGround = false; // keeps the sprite on the jump frame
+  flapLatch = true;        // require a fresh press for the first flap
+  Object.assign(player, {x: 160, y: canvas.height/2 - player.h/2, vx:0, vy:0});
 }
 
 // ================= GAME LOOP =================
@@ -1195,14 +2611,61 @@ function tryStart(){
     errorOverlay.style.display = "flex";
     return;
   }
-  buildLevel();
+  currentLevel = 1;
+  levelStartScore = 0;
+  buildCurrentLevel();
   loop();
+}
+
+// ================= LEVEL FLOW =================
+function finishLevel(){
+  levelFinished = true;
+  player.vx = 0;
+  player.vy = 0;
+
+  if (currentLevel < 3) {
+    // Interstitial, then the next level — the topic isn't complete yet.
+    const next = currentLevel + 1;
+    document.getElementById("levelIntroTitle").textContent = `Level ${next}: ${LEVEL_NAMES[next]}`;
+    document.getElementById("levelIntroText").textContent =
+      next === 2
+        ? `Answer questions to open the gates and find the exit! Correct answers are now worth ${POINTS_PER_LEVEL[2]} points each.`
+        : `Tap or press Space to flap through the pipes! Correct answers are now worth ${POINTS_PER_LEVEL[3]} points each.`;
+    document.getElementById("levelIntro").style.display = "flex";
+    return;
+  }
+
+  // Level 3 done -> the whole topic is complete.
+  const completed = JSON.parse(localStorage.getItem("completedTopics") || "[]");
+  if (!completed.includes(selectedTopic)) {
+    completed.push(selectedTopic);
+    localStorage.setItem("completedTopics", JSON.stringify(completed));
+    saveProgressToServer(completed);
+  }
+
+  localStorage.setItem("lastScore", score);
+  submitScoreToLeaderboard();
+
+  summary.style.display = "flex";
+  resultText.textContent = `Score: ${score}`;
+}
+
+function startNextLevel(){
+  document.getElementById("levelIntro").style.display = "none";
+  currentLevel++;
+  levelStartScore = score;
+  buildCurrentLevel();
 }
 
 // ================= UPDATE =================
 function update(){
   if(isAsking || levelFinished) return;
+  if(currentLevel === 1) updatePlatformer();
+  else if(currentLevel === 2) updateMaze();
+  else updateFlappy();
+}
 
+function updatePlatformer(){
   player.vx = 0;
   if(keys.ArrowLeft || keys.KeyA) player.vx = -player.speed;
   if(keys.ArrowRight || keys.KeyD) player.vx = player.speed;
@@ -1230,7 +2693,7 @@ function update(){
     }
   });
 
-  // SPIKES = RESTART LEVEL
+  // SPIKES = RESTART CURRENT LEVEL
   spikes.forEach(s=>{
     if(
       player.x < s.x + s.w &&
@@ -1238,7 +2701,7 @@ function update(){
       player.y < s.y + s.h &&
       player.y + player.h > s.y
     ){
-      buildLevel();
+      buildCurrentLevel();
     }
   });
 
@@ -1258,35 +2721,123 @@ questions.forEach(q=>{
 
  // FINISH LINE
 if (player.x + player.w > finishLine.x) {
-  levelFinished = true;
-
-  const completed = JSON.parse(localStorage.getItem("completedTopics") || "[]");
-  if (!completed.includes(selectedTopic)) {
-    completed.push(selectedTopic);
-    localStorage.setItem("completedTopics", JSON.stringify(completed));
-    saveProgressToServer(completed);
-  }
-
-  // ✅ SAVE SCORE FOR RANKS
-  localStorage.setItem("lastScore", score);
-
-  summary.style.display = "flex";
-  resultText.textContent = `Score: ${score}/5`;
-
-  player.vx = 0;
-  player.vy = 0;
+  finishLevel();
+  return;
 }
 
   // CAMERA
   cameraX = Math.max(0, player.x - canvas.width / 2);
 }
 
+function updateMaze(){
+  // Top-view movement: no gravity, 4-directional at walking speed.
+  let dx = 0, dy = 0;
+  if(keys.ArrowLeft || keys.KeyA) dx = -player.speed;
+  if(keys.ArrowRight || keys.KeyD) dx = player.speed;
+  if(keys.ArrowUp || keys.KeyW) dy = -player.speed;
+  if(keys.ArrowDown || keys.KeyS) dy = player.speed;
+  player.vx = dx; // drives the walk/idle sprite + facing flip
+
+  // Axis-separated collision so the player slides along walls.
+  const solids = walls.concat(gates.filter(g => !g.open));
+  player.x += dx;
+  solids.forEach(s=>{
+    if(rectsOverlap(player, s)) player.x = dx > 0 ? s.x - player.w : s.x + s.w;
+  });
+  player.y += dy;
+  solids.forEach(s=>{
+    if(rectsOverlap(player, s)) player.y = dy > 0 ? s.y - player.h : s.y + s.h;
+  });
+
+  // Question gates: touching a closed gate asks its question; a correct
+  // answer opens the way, a wrong one keeps it shut (walk up and retry).
+  gates.forEach(g=>{
+    if(g.open || isAsking) return;
+    if(g.cooldown > 0){ g.cooldown--; return; }
+    const near = {x:player.x-8, y:player.y-8, w:player.w+16, h:player.h+16};
+    if(rectsOverlap(near, g)){
+      askQuestion({data: g.data}, correct=>{
+        if(correct) g.open = true;
+        else g.cooldown = 40;
+      });
+    }
+  });
+
+  if(mazeExit && rectsOverlap(player, mazeExit)){
+    finishLevel();
+    return;
+  }
+
+  // CAMERA — follows on both axes; centers the maze if it fits on screen.
+  cameraX = mazeW <= canvas.width
+    ? (mazeW - canvas.width) / 2
+    : Math.max(0, Math.min(player.x + player.w/2 - canvas.width/2, mazeW - canvas.width));
+  cameraY = mazeH <= canvas.height
+    ? (mazeH - canvas.height) / 2
+    : Math.max(0, Math.min(player.y + player.h/2 - canvas.height/2, mazeH - canvas.height));
+}
+
+function updateFlappy(){
+  const groundY = canvas.height - 60;
+
+  // A question pipe freezes the world until it's answered correctly.
+  if(flappyHold){
+    if(flappyCooldown > 0){ flappyCooldown--; return; }
+    const p = flappyHold;
+    askQuestion({data: p.question}, correct=>{
+      if(correct){ p.barrier = false; flappyHold = null; }
+      else flappyCooldown = 45; // brief pause, then the question re-asks
+    });
+    return;
+  }
+
+  // Flap on a fresh press (Space/Up key or the touch jump button).
+  const pressed = keys.Space || keys.ArrowUp;
+  if(pressed && !flapLatch) player.vy = FLAPPY_IMPULSE;
+  flapLatch = !!pressed;
+
+  player.vy += FLAPPY_GRAVITY;
+  player.y += player.vy;
+
+  // Scroll the world left.
+  pipes.forEach(p => p.x -= FLAPPY_SCROLL);
+  flappyFinish.x -= FLAPPY_SCROLL;
+
+  // An approaching unanswered question pipe grabs the hold.
+  const next = pipes.find(p =>
+    p.barrier && p.x + p.w > player.x && p.x - (player.x + player.w) < 150
+  );
+  if(next){ flappyHold = next; flappyCooldown = 0; return; }
+
+  // Ceiling and floor are soft: the player rests against them instead of dying,
+  // so touching the ground is safe now — only hitting a pipe ends the run.
+  if(player.y < 0){ player.y = 0; player.vy = 0; }
+  if(player.y + player.h > groundY){ player.y = groundY - player.h; player.vy = 0; }
+  for(const p of pipes){
+    const inX = player.x + player.w > p.x && player.x < p.x + p.w;
+    if(inX && (player.y < p.gapY || player.y + player.h > p.gapY + p.gapH)){
+      buildCurrentLevel();
+      return;
+    }
+  }
+
+  if(flappyFinish.x < player.x) finishLevel();
+}
+
 // ================= DRAW =================
 function draw(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
   ctx.save();
-  ctx.translate(-cameraX,0);
+  ctx.translate(-cameraX,-cameraY);
 
+  if(currentLevel === 1) drawPlatformer();
+  else if(currentLevel === 2) drawMaze();
+  else drawFlappy();
+
+  ctx.restore();
+}
+
+function drawPlatformer(){
   platforms.forEach(p=>{
     for(let x=p.x;x<p.x+p.w;x+=32)
       for(let y=p.y;y<p.y+p.h;y+=32)
@@ -1319,12 +2870,104 @@ function draw(){
   ctx.fillStyle="#fff";
   ctx.fillRect(finishLine.x,finishLine.y,finishLine.w,finishLine.h);
   ctx.drawImage(currentPlayerSprite(),player.x,player.y,player.w,player.h);
+}
 
-  ctx.restore();
+// Shared sprite draw with a horizontal flip when moving left (used by the
+// top-view maze so the character faces its walking direction).
+function drawPlayerSpriteFlipped(){
+  const img = currentPlayerSprite();
+  if(player.vx < 0){
+    ctx.save();
+    ctx.translate(player.x + player.w, player.y);
+    ctx.scale(-1, 1);
+    ctx.drawImage(img, 0, 0, player.w, player.h);
+    ctx.restore();
+  } else {
+    ctx.drawImage(img, player.x, player.y, player.w, player.h);
+  }
+}
+
+function drawMaze(){
+  // Floor seen from above.
+  ctx.fillStyle = "#232345";
+  ctx.fillRect(0, 0, mazeW, mazeH);
+
+  // Walls — flat placeholder blocks; swapping in tile art later only
+  // touches these draw calls, never the collision rects.
+  ctx.fillStyle = "#4b0010";
+  walls.forEach(w => ctx.fillRect(w.x, w.y, w.w, w.h));
+  ctx.strokeStyle = "rgba(255,215,0,.25)";
+  walls.forEach(w => ctx.strokeRect(w.x, w.y, w.w, w.h));
+
+  // Closed question gates.
+  gates.forEach(g=>{
+    if(g.open) return;
+    ctx.fillStyle = "#FFD700";
+    ctx.fillRect(g.x, g.y, g.w, g.h);
+    ctx.strokeStyle = "#4b0010";
+    ctx.strokeRect(g.x, g.y, g.w, g.h);
+    ctx.fillStyle = "#000";
+    ctx.font = "bold 40px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("?", g.x + g.w/2, g.y + g.h/2);
+  });
+
+  // Exit.
+  if(mazeExit){
+    ctx.fillStyle = "#4caf50";
+    ctx.fillRect(mazeExit.x, mazeExit.y, mazeExit.w, mazeExit.h);
+    ctx.fillStyle = "#fff";
+    ctx.font = "bold 16px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("EXIT", mazeExit.x + mazeExit.w/2, mazeExit.y + mazeExit.h/2);
+  }
+
+  drawPlayerSpriteFlipped();
+}
+
+function drawFlappy(){
+  const groundY = canvas.height - 60;
+
+  // Pipes — flat placeholder rects; art drop-in later is render-only.
+  pipes.forEach(p=>{
+    ctx.fillStyle = "#2e7d32";
+    ctx.fillRect(p.x, 0, p.w, p.gapY);
+    ctx.fillRect(p.x, p.gapY + p.gapH, p.w, groundY - (p.gapY + p.gapH));
+    ctx.strokeStyle = "#1b4d1e";
+    ctx.strokeRect(p.x, 0, p.w, p.gapY);
+    ctx.strokeRect(p.x, p.gapY + p.gapH, p.w, groundY - (p.gapY + p.gapH));
+
+    // Unanswered question pipes block the gap with a golden barrier.
+    if(p.barrier){
+      ctx.fillStyle = "rgba(255,215,0,.75)";
+      ctx.fillRect(p.x, p.gapY, p.w, p.gapH);
+      ctx.fillStyle = "#000";
+      ctx.font = "bold 40px Arial";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("?", p.x + p.w/2, p.gapY + p.gapH/2);
+    }
+  });
+
+  // Finish flag.
+  if(flappyFinish){
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(flappyFinish.x, 0, flappyFinish.w, groundY);
+  }
+
+  // Ground strip.
+  ctx.fillStyle = "#4b0010";
+  ctx.fillRect(0, groundY, canvas.width, 60);
+
+  ctx.drawImage(currentPlayerSprite(), player.x, player.y, player.w, player.h);
 }
 
 // ================= ANSWER UI =================
-function askQuestion(q){
+// onResult (optional) is called with true/false after the modal closes —
+// maze gates and flappy question pipes use it to open (or stay shut).
+function askQuestion(q, onResult){
   isAsking = true;
   clearKeys();
 
@@ -1349,9 +2992,9 @@ function askQuestion(q){
 
       if (isCorrect) {
         btn.style.background = "#4caf50";
-        score++;
+        score += POINTS_PER_LEVEL[currentLevel];
         scoreEl.textContent = score;
-        quizFeedback.textContent = "Correct!";
+        quizFeedback.textContent = `Correct! +${POINTS_PER_LEVEL[currentLevel]} point${POINTS_PER_LEVEL[currentLevel] > 1 ? "s" : ""}`;
       } else {
         btn.style.background = "#e53935";
         quizChoices.children[q.data.correct - 1].style.background = "#4caf50";
@@ -1361,6 +3004,7 @@ function askQuestion(q){
       setTimeout(() => {
         quizModal.style.display = "none";
         isAsking = false;
+        if (onResult) onResult(isCorrect);
       }, 1200);
     };
     quizChoices.appendChild(btn);

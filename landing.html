@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EduQueSCT — An Educational Adventure</title>
+
+<style>
+  * { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  html, body { overflow-anchor: none; }
+
+  body {
+    margin: 0;
+    background: #4b0010;
+    font-family: "Poppins", Arial, sans-serif;
+    color: #FFD700;
+    overflow-x: hidden;
+    opacity: 1;
+    transition: opacity 0.35s ease;
+  }
+
+  body.fading-out { opacity: 0; }
+
+  h1, h2, .press-start {
+    font-family: 'Press Start 2P', cursive;
+  }
+
+  section {
+    position: relative;
+    padding: 90px 20px;
+  }
+
+  /* ================= SECTION BACKGROUND PHOTOS ================= */
+
+  #about, #creators, #support, #cta {
+    background-size: cover;
+    background-position: center;
+    overflow: hidden;
+  }
+
+  #about::before, #creators::before, #support::before, #cta::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background: linear-gradient(rgba(75, 0, 16, 0.82), rgba(75, 0, 16, 0.88));
+  }
+
+  #about { background-image: url("landing-bg-daytime.png"); }
+  #creators { background-image: url("landing-bg-albertus.png"); }
+  #support { background-image: url("landing-bg-garden.png"); }
+  #cta { background-image: url("landing-bg-clocktower.png"); }
+
+  #about > *, #creators > *, #support > *, #cta > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ================= HERO ================= */
+
+  #hero {
+    position: relative;
+    height: 100vh;
+    min-height: 480px;
+    overflow: hidden;
+    padding: 0;
+  }
+
+  #heroArt {
+    position: absolute;
+    top: 0;
+    left: -15%;
+    width: 130%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 30%;
+    will-change: transform;
+    transition: transform 0.4s ease-out;
+  }
+
+  @media (max-width: 480px) {
+    #heroArt {
+      width: 300%;
+      left: -100%;
+      object-position: center 62%;
+    }
+  }
+
+  #heroTitle {
+    position: relative;
+    z-index: 2;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    will-change: transform, opacity;
+  }
+
+  #heroTitle h1 {
+    font-size: 42px;
+    color: #FFD700;
+    margin: 0;
+    text-shadow:
+      2px 2px 0 #4b0010,
+      -2px -2px 0 #4b0010,
+      2px -2px 0 #4b0010,
+      -2px 2px 0 #4b0010,
+      4px 4px 0 #000;
+  }
+
+  #heroTitle p {
+    font-size: 14px;
+    color: #fff;
+    text-shadow: 2px 2px 0 #000;
+    margin-top: 14px;
+  }
+
+  @media (max-width: 480px) {
+    #heroTitle h1 { font-size: 26px; }
+    #heroTitle p { font-size: 11px; }
+  }
+
+  #scrollCue {
+    position: absolute;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2;
+    font-size: 11px;
+    color: #FFD700;
+    text-shadow: 2px 2px 0 #000;
+    animation: float 2.2s ease-in-out infinite;
+    text-align: center;
+  }
+
+  #scrollCue .arrow { font-size: 18px; margin-top: 2px; }
+
+  #dragHint {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    z-index: 2;
+    font-size: 10px;
+    color: #FFD700;
+    opacity: 0.6;
+    text-shadow: 2px 2px 0 #000;
+  }
+
+  @media (hover: none), (max-width: 480px) {
+    #dragHint { display: none; }
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateX(-50%) translateY(0); }
+    50% { transform: translateX(-50%) translateY(-8px); }
+  }
+
+  /* ================= SECTION FADE-IN (scroll reveal) ================= */
+
+  .reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+  }
+
+  .reveal.in-view {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .section-seam {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 180px;
+    pointer-events: none;
+    background: linear-gradient(to bottom, transparent, #4b0010);
+  }
+
+  /* ================= SHARED PANEL / CARD LOOK ================= */
+
+  .panel {
+    max-width: 720px;
+    margin: 0 auto;
+    background: rgba(10, 0, 4, 0.72);
+    backdrop-filter: blur(6px);
+    border: 3px solid #FFD700;
+    border-radius: 18px;
+    padding: 32px 36px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+    text-align: center;
+  }
+
+  .panel h2 {
+    font-size: 20px;
+    color: #FFD700;
+    text-shadow: 2px 2px 0 #000;
+    margin-top: 0;
+  }
+
+  .panel p {
+    font-size: 14px;
+    line-height: 1.7;
+    color: #fff;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.6);
+  }
+
+  /* ================= CREATORS ================= */
+
+  #creators .panel { max-width: 980px; }
+
+  .creator-gallery {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 24px;
+    margin-top: 24px;
+  }
+
+  .creator-card {
+    width: 150px;
+  }
+
+  .creator-photo {
+    width: 100px;
+    height: 100px;
+    margin: 0 auto 12px;
+    border-radius: 50%;
+    border: 4px solid #FFD700;
+    background: rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: #FFD700;
+  }
+
+  .creator-name {
+    font-size: 11px;
+    color: #FFD700;
+    text-shadow: 2px 2px 0 #000;
+  }
+
+  .creator-role {
+    font-size: 11px;
+    color: #fff;
+    opacity: 0.8;
+    margin-top: 4px;
+  }
+
+  /* ================= SUPPORT ================= */
+
+  .qr-card {
+    width: 220px;
+    margin: 24px auto 0;
+    background: rgba(10, 0, 4, 0.72);
+    border: 3px solid #FFD700;
+    border-radius: 18px;
+    padding: 18px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  }
+
+  .qr-card img {
+    width: 100%;
+    border-radius: 10px;
+    display: block;
+  }
+
+  .qr-caption {
+    font-size: 12px;
+    color: #fff;
+    margin-top: 10px;
+  }
+
+  .qr-label {
+    font-size: 11px;
+    color: #FFD700;
+    text-shadow: 2px 2px 0 #000;
+    margin-top: 4px;
+  }
+
+  /* ================= CTA BUTTON ================= */
+
+  .cta-btn {
+    font-family: 'Press Start 2P', cursive;
+    font-size: 14px;
+    color: #FFD700;
+    background: linear-gradient(160deg, rgba(20, 20, 20, 0.85), rgba(0, 0, 0, 0.7));
+    border: 3px solid #FFD700;
+    border-radius: 14px;
+    padding: 18px 32px;
+    cursor: pointer;
+    text-shadow: 2px 2px 0 #000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+    transition: transform 0.22s cubic-bezier(.34,1.56,.64,1), box-shadow 0.22s ease, background 0.18s ease;
+  }
+
+  .cta-btn:hover {
+    background: linear-gradient(160deg, #ffe14d, #FFD700);
+    color: #000;
+    transform: scale(1.08);
+    box-shadow: 0 0 18px rgba(255, 215, 0, 0.55), 0 6px 20px rgba(0, 0, 0, 0.4);
+  }
+
+  #cta {
+    text-align: center;
+    padding-bottom: 120px;
+  }
+
+  #cta h2 {
+    font-size: 20px;
+    text-shadow: 2px 2px 0 #000;
+  }
+</style>
+</head>
+<body>
+
+<section id="hero">
+  <picture>
+    <source media="(max-width: 480px)" srcset="landing-hero-mobile.jpg">
+    <img id="heroArt" src="landing-hero-desktop.jpg" alt="">
+  </picture>
+  <div id="heroTitle">
+    <h1>EduQueSCT</h1>
+    <p>An Educational Adventure</p>
+  </div>
+  <div id="dragHint">&#8596; drag me</div>
+  <div id="scrollCue">
+    Scroll to explore
+    <div class="arrow">&#8595;</div>
+  </div>
+</section>
+
+<section id="about" class="reveal">
+  <div class="panel">
+    <h2>About the Project</h2>
+    <p>
+      EduQueSCT ("Skill Check Training") is a browser-based educational game
+      that teaches Science, Math, and English through play. Every topic is a
+      three-level adventure &mdash; a platformer, a top-down maze, and a
+      Flappy-Bird-style flight &mdash; gated by AI-generated quiz questions
+      that adapt to the player's grade level.
+    </p>
+  </div>
+  <div class="section-seam"></div>
+</section>
+
+<section id="creators" class="reveal">
+  <div class="panel">
+    <h2>The Creators</h2>
+    <p>Meet the team behind EduQueSCT.</p>
+    <!-- TODO: replace with real creator info (names, roles, photos) -->
+    <div class="creator-gallery">
+      <div class="creator-card">
+        <div class="creator-photo">?</div>
+        <div class="creator-name">Creator 1</div>
+        <div class="creator-role">Role TBD</div>
+      </div>
+      <div class="creator-card">
+        <div class="creator-photo">?</div>
+        <div class="creator-name">Creator 2</div>
+        <div class="creator-role">Role TBD</div>
+      </div>
+      <div class="creator-card">
+        <div class="creator-photo">?</div>
+        <div class="creator-name">Creator 3</div>
+        <div class="creator-role">Role TBD</div>
+      </div>
+      <div class="creator-card">
+        <div class="creator-photo">?</div>
+        <div class="creator-name">Creator 4</div>
+        <div class="creator-role">Role TBD</div>
+      </div>
+      <div class="creator-card">
+        <div class="creator-photo">?</div>
+        <div class="creator-name">Creator 5</div>
+        <div class="creator-role">Role TBD</div>
+      </div>
+    </div>
+  </div>
+  <div class="section-seam"></div>
+</section>
+
+<section id="support" class="reveal">
+  <div class="panel">
+    <h2>Support the Creators</h2>
+    <p>If EduQueSCT helped you learn something new, consider supporting the team.</p>
+    <div class="qr-card">
+      <img src="donate-maya-qr.png" alt="Maya QR code for Gian Russell Balba">
+      <div class="qr-caption">Gian Russell Balba</div>
+      <div class="qr-label">Support via Maya</div>
+    </div>
+  </div>
+  <div class="section-seam"></div>
+</section>
+
+<section id="cta" class="reveal">
+  <h2>Ready to play?</h2>
+  <button class="cta-btn" id="ctaBtn">Click to Continue</button>
+</section>
+
+<script>
+if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+
+// ================= REDUCED MOTION GUARD =================
+const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+if (reduceMotion) {
+  document.querySelectorAll(".reveal").forEach(el => {
+    el.style.transition = "none";
+    el.classList.add("in-view");
+  });
+}
+
+// ================= SCROLL PARALLAX (hero art + title) =================
+const heroArt = document.getElementById("heroArt");
+const heroTitle = document.getElementById("heroTitle");
+let rafScheduled = false;
+
+if (!reduceMotion) {
+  window.addEventListener("scroll", () => {
+    if (rafScheduled) return;
+    rafScheduled = true;
+    requestAnimationFrame(() => {
+      const y = window.scrollY;
+      heroArt.style.transform = `translateY(${y * 0.35}px)`;
+      heroTitle.style.transform = `translateY(${y * 0.6}px)`;
+      heroTitle.style.opacity = Math.max(0, 1 - y / 400);
+      rafScheduled = false;
+    });
+  });
+}
+
+// ================= SCROLL REVEAL (About/Creators/Support/CTA) =================
+const revealObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) entry.target.classList.add("in-view");
+  });
+}, { threshold: 0.15 });
+
+document.querySelectorAll(".reveal").forEach(el => revealObserver.observe(el));
+
+// ================= DRAG-TO-PAN HERO ART (Pointer Events) =================
+// Distinct from the mousemove-tracking parallax on login.html: this only
+// activates on deliberate press-and-drag inside the hero, and never blocks
+// vertical scroll (no preventDefault on pointermove).
+if (!reduceMotion) {
+  const hero = document.getElementById("hero");
+  let dragging = false;
+  let startX = 0;
+
+  hero.addEventListener("pointerdown", (e) => {
+    dragging = true;
+    startX = e.clientX;
+    heroArt.style.transition = "none";
+  });
+
+  window.addEventListener("pointermove", (e) => {
+    if (!dragging) return;
+    const dx = Math.max(-60, Math.min(60, (e.clientX - startX) * 0.4));
+    heroArt.style.transform = `translateY(${window.scrollY * 0.35}px) translateX(${dx}px)`;
+  });
+
+  function endDrag() {
+    if (!dragging) return;
+    dragging = false;
+    heroArt.style.transition = "transform 0.4s ease-out";
+    heroArt.style.transform = `translateY(${window.scrollY * 0.35}px) translateX(0)`;
+  }
+
+  window.addEventListener("pointerup", endDrag);
+  window.addEventListener("pointercancel", endDrag);
+}
+
+// ================= CTA (fade-out before navigating) =================
+function goTo(url) {
+  if (reduceMotion) {
+    window.location.href = url;
+    return;
+  }
+  document.body.classList.add("fading-out");
+  setTimeout(() => { window.location.href = url; }, 320);
+}
+
+document.getElementById("ctaBtn").onclick = () => {
+  goTo("login.html");
+};
+</script>
+
+</body>
+</html>

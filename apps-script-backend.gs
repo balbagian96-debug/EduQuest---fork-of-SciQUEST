@@ -144,7 +144,7 @@ function verifyGoogleToken(idToken) {
     if (payload.aud !== GOOGLE_CLIENT_ID) {
       return { payload: null, debug: { stage: "aud_mismatch", aud: payload.aud, expected: GOOGLE_CLIENT_ID } };
     }
-    if (!payload.email || payload.email_verified !== "true") {
+    if (!payload.email || String(payload.email_verified) !== "true") {
       return { payload: null, debug: { stage: "email_verified", email: payload.email, email_verified: payload.email_verified, type: typeof payload.email_verified } };
     }
     return { payload };
