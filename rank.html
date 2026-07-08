@@ -72,14 +72,15 @@ li {
 <body>
 
 <div class="container">
-  <h2>🏆 Leaderboard</h2>
+  <h2 data-i18n="rank_title">🏆 Leaderboard</h2>
 
-  <h3>Top Players</h3>
+  <h3 data-i18n="rank_subtitle">Top Players</h3>
   <ul id="list"></ul>
 
-  <button onclick="goBack()">⬅ Back</button>
+  <button data-i18n="rank_back" onclick="goBack()">⬅ Back</button>
 </div>
 
+<script src="strings.js"></script>
 <script>
 // View-only: scores are submitted automatically by start.html when a topic
 // finishes — no manual name/submit form here anymore.
