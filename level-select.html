@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Level Select</title>
+
+<style>
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: 'Press Start 2P', cursive;
+}
+
+body {
+  background: url("level bg.png") no-repeat center center fixed;
+  background-size: cover;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* CONTAINER */
+#levels {
+  background: rgba(10, 0, 4, 0.72);
+  backdrop-filter: blur(6px);
+  border: 3px solid #FFD700;
+  padding: 35px 45px;
+  border-radius: 18px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  text-align: center;
+  color: white;
+}
+
+#levels h1 {
+  margin-bottom: 8px;
+  color: #FFD700;
+  font-size: 18px;
+}
+
+#levels #topicLabel {
+  margin-bottom: 30px;
+  font-size: 11px;
+  color: white;
+  text-shadow: 2px 2px 0 #000;
+}
+
+/* FLOAT ANIMATION */
+@keyframes float {
+  0%   { transform: translateY(0); }
+  50%  { transform: translateY(-8px); }
+  100% { transform: translateY(0); }
+}
+
+/* LEVEL BUTTON */
+.level-btn {
+  display: block;
+  width: 260px;
+  margin: 16px auto;
+  padding: 16px;
+  font-size: 14px;
+  border-radius: 14px;
+  border: 3px solid #FFD700;
+  background: linear-gradient(160deg, rgba(20, 20, 20, 0.85), rgba(0, 0, 0, 0.7));
+  color: #FFD700;
+  text-shadow: 2px 2px 0 #000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+  transition: transform 0.22s cubic-bezier(.34,1.56,.64,1), box-shadow 0.22s ease, background 0.18s ease;
+  animation: float 2.5s ease-in-out infinite;
+}
+
+.level-btn:hover {
+  background: linear-gradient(160deg, #ffe14d, #FFD700);
+  color: #000;
+  transform: scale(1.08);
+  box-shadow: 0 0 18px rgba(255, 215, 0, 0.55), 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+/* BACK BUTTON */
+#backBtn {
+  margin-top: 28px;
+  background: #4b0010;
+}
+
+@media (max-width: 480px) {
+  #levels { padding: 24px 20px; }
+  #levels h1 { font-size: 14px; margin-bottom: 8px; }
+  #levels #topicLabel { font-size: 10px; margin-bottom: 20px; }
+  .level-btn { width: min(260px, 78vw); font-size: 12px; padding: 12px; }
+}
+</style>
+</head>
+
+<body>
+
+<div id="levels">
+  <h1>🎮 Select Game Mode</h1>
+  <div id="topicLabel"></div>
+
+  <button class="level-btn" data-level="1">Level 1 — Platformer</button>
+  <button class="level-btn" data-level="2">Level 2 — The Maze</button>
+  <button class="level-btn" data-level="3">Level 3 — Flappy Flight</button>
+
+  <button class="level-btn" id="backBtn">⬅ Back to Topics</button>
+</div>
+
+<script>
+const selectedSubject = localStorage.getItem("selectedSubject") || "";
+const selectedTopic = localStorage.getItem("selectedTopic") || "";
+document.getElementById("topicLabel").textContent = `${selectedSubject} — ${selectedTopic}`;
+
+document.querySelectorAll(".level-btn[data-level]").forEach(btn => {
+  btn.onclick = () => {
+    localStorage.setItem("selectedStartLevel", btn.dataset.level);
+    window.location.href = "start.html";
+  };
+});
+
+document.getElementById("backBtn").onclick = () => {
+  window.location.href = "level map.html";
+};
+</script>
+
+</body>
+
+</html>

@@ -2611,7 +2611,8 @@ function tryStart(){
     errorOverlay.style.display = "flex";
     return;
   }
-  currentLevel = 1;
+  const requestedLevel = parseInt(localStorage.getItem("selectedStartLevel")) || 1;
+  currentLevel = (requestedLevel >= 1 && requestedLevel <= 3) ? requestedLevel : 1;
   levelStartScore = 0;
   buildCurrentLevel();
   loop();

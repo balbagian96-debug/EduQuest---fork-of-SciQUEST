@@ -173,7 +173,7 @@ function showTopics(subject) {
     btn.onclick = () => {
       localStorage.setItem("selectedTopic", topic.key);
       localStorage.setItem("selectedSubject", subject.name);
-      window.location.href = "start.html";
+      window.location.href = "level-select.html";
     };
     topicList.appendChild(btn);
   });
