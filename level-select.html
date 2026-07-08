@@ -96,20 +96,21 @@ body {
 <body>
 
 <div id="levels">
-  <h1>🎮 Select Game Mode</h1>
+  <h1 data-i18n="levelselect_title">🎮 Select Game Mode</h1>
   <div id="topicLabel"></div>
 
-  <button class="level-btn" data-level="1">Level 1 — Platformer</button>
-  <button class="level-btn" data-level="2">Level 2 — The Maze</button>
-  <button class="level-btn" data-level="3">Level 3 — Flappy Flight</button>
+  <button class="level-btn" data-level="1" data-i18n="levelselect_level1">Level 1 — Platformer</button>
+  <button class="level-btn" data-level="2" data-i18n="levelselect_level2">Level 2 — The Maze</button>
+  <button class="level-btn" data-level="3" data-i18n="levelselect_level3">Level 3 — Flappy Flight</button>
 
-  <button class="level-btn" id="backBtn">⬅ Back to Topics</button>
+  <button class="level-btn" id="backBtn" data-i18n="levelselect_back">⬅ Back to Topics</button>
 </div>
 
+<script src="strings.js"></script>
 <script>
 const selectedSubject = localStorage.getItem("selectedSubject") || "";
 const selectedTopic = localStorage.getItem("selectedTopic") || "";
-document.getElementById("topicLabel").textContent = `${selectedSubject} — ${selectedTopic}`;
+document.getElementById("topicLabel").textContent = `${subjectLabel(selectedSubject)} — ${topicLabel(selectedTopic)}`;
 
 document.querySelectorAll(".level-btn[data-level]").forEach(btn => {
   btn.onclick = () => {
