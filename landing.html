@@ -211,6 +211,50 @@
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.6);
   }
 
+  /* ================= ABOUT CAROUSEL ================= */
+
+  .about-carousel { position: relative; max-width: 720px; margin: 0 auto; }
+
+  .carousel-track {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    gap: 20px;
+    padding: 4px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .carousel-track::-webkit-scrollbar { display: none; }
+
+  .carousel-slide { flex: 0 0 100%; max-width: none; margin: 0; scroll-snap-align: center; }
+
+  .carousel-arrow {
+    position: absolute; top: 50%; transform: translateY(-50%); z-index: 2;
+    width: 40px; height: 40px; border-radius: 50%;
+    border: 2px solid #FFD700; background: rgba(10, 0, 4, 0.72); backdrop-filter: blur(6px);
+    color: #FFD700; font-size: 18px; line-height: 1; cursor: pointer;
+    transition: background 0.2s ease;
+  }
+  .carousel-arrow:hover { background: rgba(255, 215, 0, 0.18); }
+  .carousel-arrow--prev { left: -52px; }
+  .carousel-arrow--next { right: -52px; }
+
+  .carousel-dots { display: flex; justify-content: center; gap: 10px; margin-top: 18px; }
+  .carousel-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    border: 2px solid #FFD700; background: transparent; padding: 0; cursor: pointer;
+    transition: background 0.2s ease;
+  }
+  .carousel-dot.active { background: #FFD700; }
+
+  @media (max-width: 480px) {
+    .carousel-arrow { display: none; }
+    .about-carousel { max-width: 100%; }
+    .carousel-slide { padding: 24px 20px; }
+    .carousel-dot { width: 8px; height: 8px; }
+  }
+
   /* ================= CREATORS ================= */
 
   #creators .panel { max-width: 980px; }
@@ -338,15 +382,36 @@
 </section>
 
 <section id="about" class="reveal">
-  <div class="panel">
-    <h2>About the Project</h2>
-    <p>
-      EduQueSCT ("Skill Check Training") is a browser-based educational game
-      that teaches Science, Math, and English through play. Every topic is a
-      three-level adventure &mdash; a platformer, a top-down maze, and a
-      Flappy-Bird-style flight &mdash; gated by AI-generated quiz questions
-      that adapt to the player's grade level.
-    </p>
+  <div class="about-carousel">
+    <button class="carousel-arrow carousel-arrow--prev" id="aboutPrev" aria-label="Previous slide">&#8592;</button>
+
+    <div class="carousel-track" id="aboutTrack" tabindex="0">
+      <div class="panel carousel-slide">
+        <h2>Problem Statement</h2>
+        <p>Many students struggle to keep up with lessons, and long, text-heavy materials often cause disengagement. A 2024 Philippine Statistics Authority survey found a 93.1% basic literacy rate but only 70.8% functional literacy &mdash; showing many Filipinos still struggle to apply what they learn. This gap isn't unique to the Philippines; several countries, especially in sub-Saharan Africa, face similar literacy challenges.</p>
+      </div>
+      <div class="panel carousel-slide">
+        <h2>Proposed Solution</h2>
+        <p>EduQueSCT pairs summarized content, visual aids, and interactive quizzes to boost comprehension and keep students engaged. The game combines learning with gamification across three stage types &mdash; a platformer, a maze, and a side-scroller. Correct answers earn points; wrong answers come with explanations to reinforce the lesson.</p>
+      </div>
+      <div class="panel carousel-slide">
+        <h2>AI Incorporation</h2>
+        <p>Gemini AI, Claude, Google Flow, ChatGPT, and Figma helped shape a more dynamic and accessible learning experience. AI generated quiz questions across difficulty levels and topics, assisted with visuals, and powered dynamic maps and challenges &mdash; introducing new paths and obstacles that keep gameplay fresh and unpredictable.</p>
+      </div>
+      <div class="panel carousel-slide">
+        <h2>Result &amp; Impact on Education and the Environment</h2>
+        <p>EduQueSCT is a free, browser-based review game covering Math, English/Reading, and Science for grades 7&ndash;10, playable on computers and mobile devices. Beyond academics, it replaces paper-based study sheets &mdash; cutting down on paper waste &mdash; so studying becomes more convenient and more sustainable.</p>
+      </div>
+    </div>
+
+    <button class="carousel-arrow carousel-arrow--next" id="aboutNext" aria-label="Next slide">&#8594;</button>
+
+    <div class="carousel-dots" id="aboutDots">
+      <button class="carousel-dot" data-index="0" aria-label="Go to slide 1"></button>
+      <button class="carousel-dot" data-index="1" aria-label="Go to slide 2"></button>
+      <button class="carousel-dot" data-index="2" aria-label="Go to slide 3"></button>
+      <button class="carousel-dot" data-index="3" aria-label="Go to slide 4"></button>
+    </div>
   </div>
   <div class="section-seam"></div>
 </section>
@@ -445,6 +510,51 @@ const revealObserver = new IntersectionObserver((entries) => {
 }, { threshold: 0.15 });
 
 document.querySelectorAll(".reveal").forEach(el => revealObserver.observe(el));
+
+// ================= ABOUT CAROUSEL =================
+(function () {
+  const track = document.getElementById("aboutTrack");
+  const prevBtn = document.getElementById("aboutPrev");
+  const nextBtn = document.getElementById("aboutNext");
+  const dots = Array.from(document.querySelectorAll("#aboutDots .carousel-dot"));
+  const slides = Array.from(track.children);
+
+  if (reduceMotion) track.style.scrollBehavior = "auto";
+
+  function scrollToIndex(i) {
+    i = Math.max(0, Math.min(slides.length - 1, i));
+    track.scrollTo({ left: slides[i].offsetLeft - track.offsetLeft, behavior: reduceMotion ? "auto" : "smooth" });
+  }
+  function setActiveDot(i) { dots.forEach((d, idx) => d.classList.toggle("active", idx === i)); }
+  function currentIndex() {
+    const center = track.scrollLeft + track.clientWidth / 2;
+    let closest = 0, closestDist = Infinity;
+    slides.forEach((slide, idx) => {
+      const slideCenter = slide.offsetLeft - track.offsetLeft + slide.clientWidth / 2;
+      const dist = Math.abs(slideCenter - center);
+      if (dist < closestDist) { closestDist = dist; closest = idx; }
+    });
+    return closest;
+  }
+
+  prevBtn.addEventListener("click", () => scrollToIndex(currentIndex() - 1));
+  nextBtn.addEventListener("click", () => scrollToIndex(currentIndex() + 1));
+  dots.forEach(dot => dot.addEventListener("click", () => scrollToIndex(Number(dot.dataset.index))));
+
+  let dotRaf = false;
+  track.addEventListener("scroll", () => {
+    if (dotRaf) return;
+    dotRaf = true;
+    requestAnimationFrame(() => { setActiveDot(currentIndex()); dotRaf = false; });
+  });
+
+  track.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowRight") { e.preventDefault(); scrollToIndex(currentIndex() + 1); }
+    if (e.key === "ArrowLeft") { e.preventDefault(); scrollToIndex(currentIndex() - 1); }
+  });
+
+  setActiveDot(0);
+})();
 
 // ================= DRAG-TO-PAN HERO ART (Pointer Events) =================
 // Distinct from the mousemove-tracking parallax on login.html: this only
