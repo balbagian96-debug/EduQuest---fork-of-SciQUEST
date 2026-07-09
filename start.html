@@ -293,70 +293,20 @@ function setLevelBackground() {
     `url('${TOPIC_BG[selectedTopic] || "blue.png"}')`;
 }
 
-// ================= LUCKY BLOCK (canvas 2D isometric cube) =================
-let luckyBlockReady = true; // pure 2D — always ready immediately
+// ================= LUCKY BLOCK (sprite image) =================
+let luckyBlockReady = false;
 let lbAngle = 0;
+const lbImg = new Image();
+lbImg.onload = () => { luckyBlockReady = true; };
+lbImg.src = "Luckyblock.PNG";
 
-function initLuckyBlock() { /* no-op — 2D draw needs no setup */ }
+function initLuckyBlock() { /* image loads via lbImg.onload above */ }
 
 function drawLuckyBlock(x, y, w, h) {
+  if (!luckyBlockReady) return false;
   lbAngle += 0.05;
   const bob = Math.sin(lbAngle) * h * 0.06; // gentle up-down bob
-  const ty = y + bob;
-
-  const depth = w * 0.28; // thickness of the 3D sides
-  const sh = h * 0.28;    // height of top face
-
-  ctx.save();
-
-  // === Top face (bright gold) ===
-  ctx.fillStyle = "#FFE566";
-  ctx.beginPath();
-  ctx.moveTo(x,         ty);
-  ctx.lineTo(x + depth, ty - sh);
-  ctx.lineTo(x + w + depth, ty - sh);
-  ctx.lineTo(x + w,    ty);
-  ctx.closePath();
-  ctx.fill();
-  ctx.strokeStyle = "#7a5500";
-  ctx.lineWidth = 1.5;
-  ctx.stroke();
-
-  // === Right side (dark gold) ===
-  ctx.fillStyle = "#9B6E00";
-  ctx.beginPath();
-  ctx.moveTo(x + w,    ty);
-  ctx.lineTo(x + w + depth, ty - sh);
-  ctx.lineTo(x + w + depth, ty + h - sh);
-  ctx.lineTo(x + w,    ty + h);
-  ctx.closePath();
-  ctx.fill();
-  ctx.strokeStyle = "#7a5500";
-  ctx.lineWidth = 1.5;
-  ctx.stroke();
-
-  // === Front face (gold) ===
-  ctx.fillStyle = "#FFD700";
-  ctx.fillRect(x, ty, w, h);
-
-  // Inner border
-  ctx.strokeStyle = "#7a5500";
-  ctx.lineWidth = Math.max(2, w * 0.05);
-  ctx.strokeRect(x + w * 0.07, ty + h * 0.07, w * 0.86, h * 0.86);
-
-  // "?" text
-  ctx.fillStyle = "#4b0010";
-  ctx.font = `bold ${Math.round(h * 0.62)}px Arial`;
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillText("?", x + w / 2, ty + h * 0.52);
-
-  // Outer border on front face
-  ctx.strokeStyle = "#7a5500";
-  ctx.lineWidth = 2;
-  ctx.strokeRect(x, ty, w, h);
-
-  ctx.restore();
+  ctx.drawImage(lbImg, x, y + bob, w, h);
   return true;
 }
 
