@@ -241,8 +241,7 @@ body[data-mode="maze"] #touchJump { display: none; }
   </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
 <script src="strings.js"></script>
 <script>
 // ================= CHARACTER GUARD =================
@@ -301,32 +300,53 @@ let luckyBlockMesh = null;
 let lbScene, lbCamera, lbRenderer, lbRotation = 0;
 
 function initLuckyBlock() {
-  if (typeof THREE === "undefined" || typeof THREE.GLTFLoader === "undefined") return;
+  if (typeof THREE === "undefined") return;
   const tc = document.getElementById("threeCanvas");
-  lbRenderer = new THREE.WebGLRenderer({ canvas: tc, alpha: true, antialias: true });
+  lbRenderer = new THREE.WebGLRenderer({ canvas: tc, alpha: true, antialias: true, preserveDrawingBuffer: true });
   lbRenderer.setSize(128, 128);
   lbRenderer.setClearColor(0x000000, 0);
 
   lbScene = new THREE.Scene();
   lbCamera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
-  lbCamera.position.set(0, 0, 3);
+  lbCamera.position.set(0, 0, 3.2);
 
-  const ambient = new THREE.AmbientLight(0xffffff, 0.7);
-  const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+  const ambient = new THREE.AmbientLight(0xffffff, 0.6);
+  const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
   dirLight.position.set(2, 4, 3);
   lbScene.add(ambient, dirLight);
 
-  const loader = new THREE.GLTFLoader();
-  loader.load("lucky_block.glb", gltf => {
-    luckyBlockMesh = gltf.scene;
-    const box = new THREE.Box3().setFromObject(luckyBlockMesh);
-    const center = box.getCenter(new THREE.Vector3());
-    const size = box.getSize(new THREE.Vector3()).length();
-    luckyBlockMesh.position.sub(center);
-    luckyBlockMesh.scale.setScalar(2.2 / size);
-    lbScene.add(luckyBlockMesh);
-    luckyBlockReady = true;
-  });
+  // Build a gold cube with a painted "?" face texture — no external file needed
+  const faceCanvas = document.createElement("canvas");
+  faceCanvas.width = faceCanvas.height = 128;
+  const fc = faceCanvas.getContext("2d");
+  // Gold background
+  fc.fillStyle = "#FFD700";
+  fc.fillRect(0, 0, 128, 128);
+  // Dark border lines (like Mario lucky block)
+  fc.strokeStyle = "#8B6914";
+  fc.lineWidth = 6;
+  fc.strokeRect(4, 4, 120, 120);
+  fc.lineWidth = 2;
+  fc.strokeRect(14, 14, 100, 100);
+  // "?" mark
+  fc.fillStyle = "#4b0010";
+  fc.font = "bold 72px Arial";
+  fc.textAlign = "center";
+  fc.textBaseline = "middle";
+  fc.fillText("?", 64, 66);
+
+  const tex = new THREE.CanvasTexture(faceCanvas);
+  const materials = [
+    new THREE.MeshStandardMaterial({ color: 0xFFD700 }), // right
+    new THREE.MeshStandardMaterial({ color: 0xFFD700 }), // left
+    new THREE.MeshStandardMaterial({ color: 0xFFAA00 }), // top
+    new THREE.MeshStandardMaterial({ color: 0xCC8800 }), // bottom
+    new THREE.MeshStandardMaterial({ map: tex }),         // front (?)
+    new THREE.MeshStandardMaterial({ map: tex }),         // back (?)
+  ];
+  luckyBlockMesh = new THREE.Mesh(new THREE.BoxGeometry(1.5, 1.5, 1.5), materials);
+  lbScene.add(luckyBlockMesh);
+  luckyBlockReady = true;
 }
 
 function drawLuckyBlock(x, y, w, h) {
