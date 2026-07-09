@@ -509,19 +509,33 @@ if (reduceMotion) {
 }
 
 // ================= SCROLL PARALLAX (hero art + title) =================
+const hero = document.getElementById("hero");
 const heroArt = document.getElementById("heroArt");
 const heroTitle = document.getElementById("heroTitle");
 let rafScheduled = false;
+
+// Offset starts at 0 (matching the art's natural rest position), dips
+// downward through the first half of the hero's scroll range, then rises
+// back past 0 into negative (upward) territory in the second half — so
+// scrolling through the hero produces both a down and an up motion, not
+// just a one-directional downward drift. Factors are ~1.7x the old flat
+// 0.35/0.6 scroll multipliers for a noticeably livelier effect.
+const ART_FACTOR = 0.6;
+const TITLE_FACTOR = 1.0;
+function heroScrollOffset(factor) {
+  const heroHeight = hero.offsetHeight || window.innerHeight;
+  const progress = Math.min(1, window.scrollY / heroHeight);
+  return factor * heroHeight * Math.sin(progress * Math.PI * 2);
+}
 
 if (!reduceMotion) {
   window.addEventListener("scroll", () => {
     if (rafScheduled) return;
     rafScheduled = true;
     requestAnimationFrame(() => {
-      const y = window.scrollY;
-      heroArt.style.transform = `translateY(${y * 0.35}px)`;
-      heroTitle.style.transform = `translateY(${y * 0.6}px)`;
-      heroTitle.style.opacity = Math.max(0, 1 - y / 400);
+      heroArt.style.transform = `translateY(${heroScrollOffset(ART_FACTOR)}px)`;
+      heroTitle.style.transform = `translateY(${heroScrollOffset(TITLE_FACTOR)}px)`;
+      heroTitle.style.opacity = Math.max(0, 1 - window.scrollY / 400);
       rafScheduled = false;
     });
   });
@@ -535,6 +549,40 @@ const revealObserver = new IntersectionObserver((entries) => {
 }, { threshold: 0.15 });
 
 document.querySelectorAll(".reveal").forEach(el => revealObserver.observe(el));
+
+// ================= PANEL SCROLL PARALLAX (About/Creators/Support/CTA) =================
+// Independent of the one-time .reveal fade-in above: this continuously
+// nudges each section's content based on its position relative to the
+// viewport center, so it drifts up while approaching center and drifts
+// back down while leaving — a subtle, reversible up-and-down motion tied
+// directly to scroll position (not just a one-time animation).
+const PANEL_PARALLAX_FACTOR = 0.1;
+const parallaxPanels = [
+  { container: document.getElementById("about"), moving: [document.querySelector("#about .about-carousel")] },
+  { container: document.getElementById("creators"), moving: [document.querySelector("#creators .panel")] },
+  { container: document.getElementById("support"), moving: [document.querySelector("#support .panel")] },
+  { container: document.getElementById("cta"), moving: Array.from(document.querySelectorAll("#cta h2, #cta .cta-btn")) },
+].filter(p => p.container && p.moving.length && p.moving.every(Boolean));
+
+if (!reduceMotion && parallaxPanels.length) {
+  let panelRaf = false;
+  function updatePanelParallax() {
+    const viewportCenter = window.innerHeight / 2;
+    parallaxPanels.forEach(({ container, moving }) => {
+      const rect = container.getBoundingClientRect();
+      const distance = (rect.top + rect.height / 2) - viewportCenter;
+      const offset = distance * -PANEL_PARALLAX_FACTOR;
+      moving.forEach(el => { el.style.transform = `translateY(${offset}px)`; });
+    });
+    panelRaf = false;
+  }
+  window.addEventListener("scroll", () => {
+    if (panelRaf) return;
+    panelRaf = true;
+    requestAnimationFrame(updatePanelParallax);
+  });
+  updatePanelParallax();
+}
 
 // ================= ABOUT CAROUSEL =================
 (function () {
@@ -603,7 +651,6 @@ document.querySelectorAll(".reveal").forEach(el => revealObserver.observe(el));
 // activates on deliberate press-and-drag inside the hero, and never blocks
 // vertical scroll (no preventDefault on pointermove).
 if (!reduceMotion) {
-  const hero = document.getElementById("hero");
   let dragging = false;
   let startX = 0;
 
@@ -616,14 +663,14 @@ if (!reduceMotion) {
   window.addEventListener("pointermove", (e) => {
     if (!dragging) return;
     const dx = Math.max(-60, Math.min(60, (e.clientX - startX) * 0.4));
-    heroArt.style.transform = `translateY(${window.scrollY * 0.35}px) translateX(${dx}px)`;
+    heroArt.style.transform = `translateY(${heroScrollOffset(ART_FACTOR)}px) translateX(${dx}px)`;
   });
 
   function endDrag() {
     if (!dragging) return;
     dragging = false;
     heroArt.style.transition = "transform 0.4s ease-out";
-    heroArt.style.transform = `translateY(${window.scrollY * 0.35}px) translateX(0)`;
+    heroArt.style.transform = `translateY(${heroScrollOffset(ART_FACTOR)}px) translateX(0)`;
   }
 
   window.addEventListener("pointerup", endDrag);
