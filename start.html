@@ -277,6 +277,18 @@ const PLATFORMER_BACKGROUNDS = [
 ];
 let platformerBgIndex = 0;
 
+// Four distinct Level 1 platform layouts (px above groundY for each of the
+// 10 platforms) so replays don't always see the same arrangement. Each
+// ascending step stays under the player's ~163px jump apex (v=14, g=0.6)
+// so every layout is fully climbable.
+const PLATFORMER_LAYOUTS = [
+  [160,240,160,240,160,240,160,240,160,240], // Zigzag staircase
+  [160,190,220,250,280,280,250,220,190,160], // Rolling hill
+  [160,160,260,160,160,260,160,160,260,160], // Plateau with gaps
+  [160,200,240,200,160,200,240,200,160,200]  // Wave
+];
+let platformerLayoutIndex = 0;
+
 const TOPIC_BG = {
   Biology: "blue.png",
   Physics: "sunset.png",
@@ -304,52 +316,54 @@ function drawLuckyBlock(x, y, w, h) {
   const bob = Math.sin(lbAngle) * h * 0.07;
   y = y + bob;
 
-  const depth = h * 0.22; // top-face height
-  const sideW = w * 0.15; // right-face width
+  // Draw the cube ABOVE the bounding box so the top & side overhang visibly
+  // The front face occupies the original h; top/side extend outside it.
+  const depth = h * 0.38; // top-face height — tall so it reads clearly
+  const sideW = w * 0.28; // right-face width — wide enough to see
 
   const FRONT   = "#FFD700";
-  const TOP     = "#FFF07A";
-  const SIDE    = "#B8860B";
-  const BORDER  = "#6B4400";
-  const STUD    = "#FFF5A0";
+  const TOP     = "#FFFAAA"; // near-white highlight
+  const SIDE    = "#7A5500"; // very dark brown shadow side
+  const BORDER  = "#3B2000";
+  const STUD    = "#FFFFF0";
   const QWHITE  = "#FFFFFF";
-  const QSHADOW = "#B8860B";
+  const QSHADOW = "#7A5500";
 
   ctx.save();
 
-  // Top face
+  // Top face — extends ABOVE y so the cube pops upward
   ctx.beginPath();
-  ctx.moveTo(x,           y + depth);
-  ctx.lineTo(x + sideW,   y);
-  ctx.lineTo(x + w,       y);
-  ctx.lineTo(x + w - sideW, y + depth);
+  ctx.moveTo(x,           y);               // bottom-left of top face
+  ctx.lineTo(x + sideW,   y - depth);       // top-left
+  ctx.lineTo(x + w,       y - depth);       // top-right
+  ctx.lineTo(x + w - sideW, y);             // bottom-right of top face
   ctx.closePath();
   ctx.fillStyle = TOP;
   ctx.fill();
   ctx.strokeStyle = BORDER; ctx.lineWidth = 2; ctx.stroke();
 
-  // Right side face
+  // Right side face — extends to the RIGHT of the front face
   ctx.beginPath();
-  ctx.moveTo(x + w,         y);
-  ctx.lineTo(x + w,         y + h - depth);
-  ctx.lineTo(x + w - sideW, y + h);
-  ctx.lineTo(x + w - sideW, y + depth);
+  ctx.moveTo(x + w - sideW, y);             // top-left of side (= bottom-right of top)
+  ctx.lineTo(x + w,         y - depth);     // top-right of side
+  ctx.lineTo(x + w,         y + h - depth); // bottom-right of side
+  ctx.lineTo(x + w - sideW, y + h);         // bottom-left of side
   ctx.closePath();
   ctx.fillStyle = SIDE;
   ctx.fill();
   ctx.strokeStyle = BORDER; ctx.lineWidth = 2; ctx.stroke();
 
-  // Front face
+  // Front face — the main gold square at original position
   const fw = w - sideW;
-  const fy = y + depth;
-  const fh = h - depth;
+  const fy = y;
+  const fh = h;
   ctx.fillStyle = FRONT;
   ctx.fillRect(x, fy, fw, fh);
 
   // Inner border frame
   const pad = fw * 0.09;
   ctx.strokeStyle = BORDER;
-  ctx.lineWidth = Math.max(2, fw * 0.065);
+  ctx.lineWidth = Math.max(2, fw * 0.07);
   ctx.strokeRect(x + pad, fy + pad, fw - pad * 2, fh - pad * 2);
 
   // Corner studs
@@ -2502,6 +2516,15 @@ function currentPlayerSprite() {
 const platformImg = new Image();
 platformImg.src = "block.png";
 
+// Level 1 terrain art: grass-topped dirt for the ground, stone chunks for
+// the floating platforms, and a green pipe as the level-exit teleporter.
+const baseImg = new Image();
+baseImg.src = "Base.PNG";
+const stonePlatformImg = new Image();
+stonePlatformImg.src = "stone-platform.png";
+const pipeImg = new Image();
+pipeImg.src = "pipe-green.png";
+
 // ================= PLAYER =================
 const player = {
   x:120, y:100, w:48, h:72,
@@ -2591,26 +2614,34 @@ function buildPlatformerLevel(){
   const groundY = canvas.height - 96;
   const levelWidth = 2000;
 
-  platforms.push({x:0,y:groundY,w:levelWidth,h:96});
+  platforms.push({x:0,y:groundY,w:levelWidth,h:96,type:"ground"});
+
+  const layout = PLATFORMER_LAYOUTS[platformerLayoutIndex % PLATFORMER_LAYOUTS.length];
+  platformerLayoutIndex++;
 
   for(let i=0;i<10;i++){
     const px=300+i*200;
-    const py=groundY-160-(i%2)*80;
-    platforms.push({x:px,y:py,w:200,h:32});
+    const py=groundY-layout[i % layout.length];
+    platforms.push({x:px,y:py,w:200,h:32,type:"platform"});
     spikes.push({x:px+80,y:py-32,w:40,h:24});
   }
 
+  // Staggered heights (not a flat row) so the lucky blocks zigzag instead
+  // of sitting parallel to each other; still within jump reach given the
+  // platform layout the player climbs past.
+  const QUESTION_HEIGHT_OFFSETS = [200, 260, 170, 300, 230];
   questionsForLevel(1).forEach((q,i)=>{
     questions.push({
       x:400+i*300,
-      y:groundY-220,
+      y:groundY-QUESTION_HEIGHT_OFFSETS[i % QUESTION_HEIGHT_OFFSETS.length],
       w:60,h:60,
       used:false,
       data:q
     });
   });
 
-  finishLine={x:levelWidth-40,y:groundY-120,w:20,h:120};
+  // Green pipe marks the level exit/teleporter to Level 2.
+  finishLine={x:levelWidth-70,y:groundY-140,w:70,h:140};
 
   Object.assign(player,{x:player.spawnX,y:player.spawnY,vx:0,vy:0});
 }
@@ -2940,11 +2971,24 @@ function draw(){
   ctx.restore();
 }
 
+const BASE_TILE_W = 263; // Base.PNG's 1130x413 aspect ratio scaled to the 96px ground height
+const STONE_OVERHANG = 16;
+
 function drawPlatformer(){
+  const baseReady = baseImg.complete && baseImg.naturalWidth > 0;
+  const stoneReady = stonePlatformImg.complete && stonePlatformImg.naturalWidth > 0;
+
   platforms.forEach(p=>{
-    for(let x=p.x;x<p.x+p.w;x+=32)
-      for(let y=p.y;y<p.y+p.h;y+=32)
-        ctx.drawImage(platformImg,x,y,32,32);
+    if(p.type === "ground" && baseReady){
+      for(let x=p.x; x<p.x+p.w; x+=BASE_TILE_W)
+        ctx.drawImage(baseImg, x, p.y, BASE_TILE_W, p.h);
+    } else if(p.type === "platform" && stoneReady){
+      ctx.drawImage(stonePlatformImg, p.x, p.y - STONE_OVERHANG, p.w, p.h + STONE_OVERHANG*2);
+    } else {
+      for(let x=p.x;x<p.x+p.w;x+=32)
+        for(let y=p.y;y<p.y+p.h;y+=32)
+          ctx.drawImage(platformImg,x,y,32,32);
+    }
   });
 
   ctx.fillStyle="red";
@@ -2971,8 +3015,12 @@ function drawPlatformer(){
     }
   });
 
-  ctx.fillStyle="#fff";
-  ctx.fillRect(finishLine.x,finishLine.y,finishLine.w,finishLine.h);
+  if(pipeImg.complete && pipeImg.naturalWidth > 0){
+    ctx.drawImage(pipeImg,finishLine.x,finishLine.y,finishLine.w,finishLine.h);
+  } else {
+    ctx.fillStyle="#fff";
+    ctx.fillRect(finishLine.x,finishLine.y,finishLine.w,finishLine.h);
+  }
   ctx.drawImage(currentPlayerSprite(),player.x,player.y,player.w,player.h);
 }
 
