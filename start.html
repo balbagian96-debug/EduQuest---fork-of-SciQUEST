@@ -241,7 +241,6 @@ body[data-mode="maze"] #touchJump { display: none; }
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
 <script src="strings.js"></script>
 <script>
 // ================= CHARACTER GUARD =================
@@ -294,67 +293,70 @@ function setLevelBackground() {
     `url('${TOPIC_BG[selectedTopic] || "blue.png"}')`;
 }
 
-// ================= LUCKY BLOCK (Three.js offscreen renderer) =================
-let luckyBlockReady = false;
-let luckyBlockMesh = null;
-let lbScene, lbCamera, lbRenderer, lbRotation = 0;
+// ================= LUCKY BLOCK (canvas 2D isometric cube) =================
+let luckyBlockReady = true; // pure 2D — always ready immediately
+let lbAngle = 0;
 
-function initLuckyBlock() {
-  if (typeof THREE === "undefined") return;
-  const tc = document.getElementById("threeCanvas");
-  lbRenderer = new THREE.WebGLRenderer({ canvas: tc, alpha: true, antialias: true, preserveDrawingBuffer: true });
-  lbRenderer.setSize(128, 128);
-  lbRenderer.setClearColor(0x000000, 0);
-
-  lbScene = new THREE.Scene();
-  lbCamera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
-  lbCamera.position.set(0, 0, 3.2);
-
-  const ambient = new THREE.AmbientLight(0xffffff, 0.6);
-  const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
-  dirLight.position.set(2, 4, 3);
-  lbScene.add(ambient, dirLight);
-
-  // Build a gold cube with a painted "?" face texture — no external file needed
-  const faceCanvas = document.createElement("canvas");
-  faceCanvas.width = faceCanvas.height = 128;
-  const fc = faceCanvas.getContext("2d");
-  // Gold background
-  fc.fillStyle = "#FFD700";
-  fc.fillRect(0, 0, 128, 128);
-  // Dark border lines (like Mario lucky block)
-  fc.strokeStyle = "#8B6914";
-  fc.lineWidth = 6;
-  fc.strokeRect(4, 4, 120, 120);
-  fc.lineWidth = 2;
-  fc.strokeRect(14, 14, 100, 100);
-  // "?" mark
-  fc.fillStyle = "#4b0010";
-  fc.font = "bold 72px Arial";
-  fc.textAlign = "center";
-  fc.textBaseline = "middle";
-  fc.fillText("?", 64, 66);
-
-  const tex = new THREE.CanvasTexture(faceCanvas);
-  const materials = [
-    new THREE.MeshStandardMaterial({ color: 0xFFD700 }), // right
-    new THREE.MeshStandardMaterial({ color: 0xFFD700 }), // left
-    new THREE.MeshStandardMaterial({ color: 0xFFAA00 }), // top
-    new THREE.MeshStandardMaterial({ color: 0xCC8800 }), // bottom
-    new THREE.MeshStandardMaterial({ map: tex }),         // front (?)
-    new THREE.MeshStandardMaterial({ map: tex }),         // back (?)
-  ];
-  luckyBlockMesh = new THREE.Mesh(new THREE.BoxGeometry(1.5, 1.5, 1.5), materials);
-  lbScene.add(luckyBlockMesh);
-  luckyBlockReady = true;
-}
+function initLuckyBlock() { /* no-op — 2D draw needs no setup */ }
 
 function drawLuckyBlock(x, y, w, h) {
-  if (!luckyBlockReady) return false;
-  lbRotation += 0.03;
-  luckyBlockMesh.rotation.y = lbRotation;
-  lbRenderer.render(lbScene, lbCamera);
-  ctx.drawImage(lbRenderer.domElement, x, y, w, h);
+  lbAngle += 0.05;
+  const bob = Math.sin(lbAngle) * h * 0.06; // gentle up-down bob
+  const ty = y + bob;
+
+  const depth = w * 0.28; // thickness of the 3D sides
+  const sh = h * 0.28;    // height of top face
+
+  ctx.save();
+
+  // === Top face (bright gold) ===
+  ctx.fillStyle = "#FFE566";
+  ctx.beginPath();
+  ctx.moveTo(x,         ty);
+  ctx.lineTo(x + depth, ty - sh);
+  ctx.lineTo(x + w + depth, ty - sh);
+  ctx.lineTo(x + w,    ty);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = "#7a5500";
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // === Right side (dark gold) ===
+  ctx.fillStyle = "#9B6E00";
+  ctx.beginPath();
+  ctx.moveTo(x + w,    ty);
+  ctx.lineTo(x + w + depth, ty - sh);
+  ctx.lineTo(x + w + depth, ty + h - sh);
+  ctx.lineTo(x + w,    ty + h);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = "#7a5500";
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // === Front face (gold) ===
+  ctx.fillStyle = "#FFD700";
+  ctx.fillRect(x, ty, w, h);
+
+  // Inner border
+  ctx.strokeStyle = "#7a5500";
+  ctx.lineWidth = Math.max(2, w * 0.05);
+  ctx.strokeRect(x + w * 0.07, ty + h * 0.07, w * 0.86, h * 0.86);
+
+  // "?" text
+  ctx.fillStyle = "#4b0010";
+  ctx.font = `bold ${Math.round(h * 0.62)}px Arial`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("?", x + w / 2, ty + h * 0.52);
+
+  // Outer border on front face
+  ctx.strokeStyle = "#7a5500";
+  ctx.lineWidth = 2;
+  ctx.strokeRect(x, ty, w, h);
+
+  ctx.restore();
   return true;
 }
 
@@ -3126,7 +3128,7 @@ function goRanks(){
 
 </script>
 
-<canvas id="threeCanvas" style="display:none" width="128" height="128"></canvas>
+
 </body>
 
 </html>
