@@ -271,6 +271,12 @@ const quizModal = document.getElementById("quizModal");
 
 
 // ================= TOPIC BACKGROUNDS =================
+const PLATFORMER_BACKGROUNDS = [
+  "GAMIFIEDDOMINICCHAPELPIXELATED.png",
+  "Level 1.png"
+];
+let platformerBgIndex = 0;
+
 const TOPIC_BG = {
   Biology: "blue.png",
   Physics: "sunset.png",
@@ -285,6 +291,49 @@ const TOPIC_BG = {
 function setLevelBackground() {
   document.body.style.backgroundImage =
     `url('${TOPIC_BG[selectedTopic] || "blue.png"}')`;
+}
+
+// ================= LUCKY BLOCK (Three.js offscreen renderer) =================
+let luckyBlockReady = false;
+let luckyBlockMesh = null;
+let lbScene, lbCamera, lbRenderer, lbRotation = 0;
+
+function initLuckyBlock() {
+  if (typeof THREE === "undefined" || typeof THREE.GLTFLoader === "undefined") return;
+  const tc = document.getElementById("threeCanvas");
+  lbRenderer = new THREE.WebGLRenderer({ canvas: tc, alpha: true, antialias: true });
+  lbRenderer.setSize(128, 128);
+  lbRenderer.setClearColor(0x000000, 0);
+
+  lbScene = new THREE.Scene();
+  lbCamera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+  lbCamera.position.set(0, 0, 3);
+
+  const ambient = new THREE.AmbientLight(0xffffff, 0.7);
+  const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+  dirLight.position.set(2, 4, 3);
+  lbScene.add(ambient, dirLight);
+
+  const loader = new THREE.GLTFLoader();
+  loader.load("lucky_block.glb", gltf => {
+    luckyBlockMesh = gltf.scene;
+    const box = new THREE.Box3().setFromObject(luckyBlockMesh);
+    const center = box.getCenter(new THREE.Vector3());
+    const size = box.getSize(new THREE.Vector3()).length();
+    luckyBlockMesh.position.sub(center);
+    luckyBlockMesh.scale.setScalar(2.2 / size);
+    lbScene.add(luckyBlockMesh);
+    luckyBlockReady = true;
+  });
+}
+
+function drawLuckyBlock(x, y, w, h) {
+  if (!luckyBlockReady) return false;
+  lbRotation += 0.03;
+  luckyBlockMesh.rotation.y = lbRotation;
+  lbRenderer.render(lbScene, lbCamera);
+  ctx.drawImage(lbRenderer.domElement, x, y, w, h);
+  return true;
 }
 
 // ================= QUESTIONS (offline fallback banks) =================
@@ -2493,7 +2542,9 @@ function buildCurrentLevel(){
 
 function buildPlatformerLevel(){
   document.body.dataset.mode = "platformer";
-  setLevelBackground();
+  document.body.style.backgroundImage =
+    `url('${PLATFORMER_BACKGROUNDS[platformerBgIndex % PLATFORMER_BACKGROUNDS.length]}')`;
+  platformerBgIndex++;
 
   const groundY = canvas.height - 96;
   const levelWidth = 2000;
@@ -2608,6 +2659,7 @@ let spritesLoaded = 0;
 });
 
 loadQuestions().then(tryStart);
+initLuckyBlock();
 
 function tryStart(){
   if(!imgReady) return;
@@ -2862,17 +2914,18 @@ function drawPlatformer(){
     ctx.fill();
   });
 
-  ctx.fillStyle="yellow";
   questions.forEach(q=>{
     if(!q.used){
-      ctx.fillRect(q.x,q.y,q.w,q.h);
-      ctx.strokeRect(q.x,q.y,q.w,q.h);
-      ctx.fillStyle="#000";
-      ctx.font="bold 32px Arial";
-      ctx.textAlign="center";
-      ctx.textBaseline="middle";
-      ctx.fillText("?",q.x+30,q.y+32);
-      ctx.fillStyle="yellow";
+      if(!drawLuckyBlock(q.x,q.y,q.w,q.h)){
+        ctx.fillStyle="yellow";
+        ctx.fillRect(q.x,q.y,q.w,q.h);
+        ctx.strokeRect(q.x,q.y,q.w,q.h);
+        ctx.fillStyle="#000";
+        ctx.font="bold 32px Arial";
+        ctx.textAlign="center";
+        ctx.textBaseline="middle";
+        ctx.fillText("?",q.x+30,q.y+32);
+      }
     }
   });
 
@@ -2911,15 +2964,17 @@ function drawMaze(){
   // Closed question gates.
   gates.forEach(g=>{
     if(g.open) return;
-    ctx.fillStyle = "#FFD700";
-    ctx.fillRect(g.x, g.y, g.w, g.h);
-    ctx.strokeStyle = "#4b0010";
-    ctx.strokeRect(g.x, g.y, g.w, g.h);
-    ctx.fillStyle = "#000";
-    ctx.font = "bold 40px Arial";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText("?", g.x + g.w/2, g.y + g.h/2);
+    if(!drawLuckyBlock(g.x, g.y, g.w, g.h)){
+      ctx.fillStyle = "#FFD700";
+      ctx.fillRect(g.x, g.y, g.w, g.h);
+      ctx.strokeStyle = "#4b0010";
+      ctx.strokeRect(g.x, g.y, g.w, g.h);
+      ctx.fillStyle = "#000";
+      ctx.font = "bold 40px Arial";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("?", g.x + g.w/2, g.y + g.h/2);
+    }
   });
 
   // Exit.
@@ -2948,15 +3003,19 @@ function drawFlappy(){
     ctx.strokeRect(p.x, 0, p.w, p.gapY);
     ctx.strokeRect(p.x, p.gapY + p.gapH, p.w, groundY - (p.gapY + p.gapH));
 
-    // Unanswered question pipes block the gap with a golden barrier.
+    // Unanswered question pipes block the gap with a lucky block.
     if(p.barrier){
-      ctx.fillStyle = "rgba(255,215,0,.75)";
-      ctx.fillRect(p.x, p.gapY, p.w, p.gapH);
-      ctx.fillStyle = "#000";
-      ctx.font = "bold 40px Arial";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText("?", p.x + p.w/2, p.gapY + p.gapH/2);
+      const bSize = p.w;
+      const bY = p.gapY + (p.gapH - bSize) / 2;
+      if(!drawLuckyBlock(p.x, bY, bSize, bSize)){
+        ctx.fillStyle = "rgba(255,215,0,.75)";
+        ctx.fillRect(p.x, p.gapY, p.w, p.gapH);
+        ctx.fillStyle = "#000";
+        ctx.font = "bold 40px Arial";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("?", p.x + p.w/2, p.gapY + p.gapH/2);
+      }
     }
   });
 
@@ -3044,6 +3103,10 @@ function goRanks(){
 }
 
 </script>
+
+<canvas id="threeCanvas" style="display:none" width="128" height="128"></canvas>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 </body>
 
 </html>
