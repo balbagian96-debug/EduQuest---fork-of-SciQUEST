@@ -2646,21 +2646,58 @@ function buildPlatformerLevel(){
   Object.assign(player,{x:player.spawnX,y:player.spawnY,vx:0,vy:0});
 }
 
-// Top-view maze map: `#` wall, `.` floor, `S` start, `E` exit, `G` question
+// Top-view maze maps: `#` wall, `.` floor, `S` start, `E` exit, `G` question
 // gate (solid until its question is answered correctly). Walls/gates are
-// plain AABB rects so custom tile art later is a render-only swap.
-const MAZE_MAP = [
-  "#############",
-  "#S..#.......#",
-  "###G#.#####G#",
-  "#...#.#...#.#",
-  "#.###.#.#.#.#",
-  "#.#...#.#.G.#",
-  "#.#.###.###.#",
-  "#...#.....#E#",
-  "#############"
+// plain AABB rects so custom tile art later is a render-only swap. Three
+// distinct layouts (each with exactly 4 gates) cycle on every replay.
+const MAZE_LAYOUTS = [
+  // "Branching" — the original hand-authored layout.
+  [
+    "#############",
+    "#S..#....G..#",
+    "###G#.#####G#",
+    "#...#.#...#.#",
+    "#.###.#.#.#.#",
+    "#.#...#.#.G.#",
+    "#.#.###.###.#",
+    "#...#....E###",
+    "#############"
+  ],
+  // "Snake" — a single back-and-forth corridor, gate at every turn.
+  [
+    "#############",
+    "#S....G.....#",
+    "###########.#",
+    "#.....G.....#",
+    "#.###########",
+    "#.....G.....#",
+    "###########.#",
+    "#.....G....E#",
+    "#############"
+  ],
+  // "Rooms" — six connected rooms in a 3x2 grid, gated doorways between them.
+  [
+    "#############",
+    "#...#...#...#",
+    "#S..G...G...#",
+    "#...#...#...#",
+    "###########.#",
+    "#...#...#...#",
+    "#.E.G...G...#",
+    "#...#...#...#",
+    "#############"
+  ]
 ];
+let mazeLayoutIndex = 0;
 const MAZE_TILE = 80;
+
+// Level 2 backdrop photos, cycling the same way PLATFORMER_BACKGROUNDS does.
+const MAZE_BACKGROUNDS = [
+  "GAMIFIEDCONVENTPIXELATED (1).png",
+  "GAMIFIEDGATE3(2)PIXELATED (1).png"
+];
+let mazeBgIndex = 0;
+const mazeBgImg = new Image();
 
 function buildMazeLevel(){
   document.body.dataset.mode = "maze";
@@ -2668,12 +2705,18 @@ function buildMazeLevel(){
   document.body.style.backgroundImage = "none";
   document.body.style.backgroundColor = "#141426";
 
-  mazeW = MAZE_MAP[0].length * MAZE_TILE;
-  mazeH = MAZE_MAP.length * MAZE_TILE;
+  mazeBgImg.src = MAZE_BACKGROUNDS[mazeBgIndex % MAZE_BACKGROUNDS.length];
+  mazeBgIndex++;
+
+  const activeMazeMap = MAZE_LAYOUTS[mazeLayoutIndex % MAZE_LAYOUTS.length];
+  mazeLayoutIndex++;
+
+  mazeW = activeMazeMap[0].length * MAZE_TILE;
+  mazeH = activeMazeMap.length * MAZE_TILE;
 
   const mazeQs = questionsForLevel(2);
   let gateCount = 0;
-  MAZE_MAP.forEach((row, r) => {
+  activeMazeMap.forEach((row, r) => {
     [...row].forEach((cell, c) => {
       const x = c*MAZE_TILE, y = r*MAZE_TILE;
       if (cell === "#") walls.push({x, y, w:MAZE_TILE, h:MAZE_TILE});
@@ -3040,9 +3083,16 @@ function drawPlayerSpriteFlipped(){
 }
 
 function drawMaze(){
-  // Floor seen from above.
-  ctx.fillStyle = "#232345";
-  ctx.fillRect(0, 0, mazeW, mazeH);
+  // Floor seen from above — the topic backdrop photo, dimmed so the
+  // walls/gates/player stay readable over it.
+  if(mazeBgImg.complete && mazeBgImg.naturalWidth > 0){
+    ctx.drawImage(mazeBgImg, 0, 0, mazeW, mazeH);
+    ctx.fillStyle = "rgba(15,15,35,0.6)";
+    ctx.fillRect(0, 0, mazeW, mazeH);
+  } else {
+    ctx.fillStyle = "#232345";
+    ctx.fillRect(0, 0, mazeW, mazeH);
+  }
 
   // Walls — flat placeholder blocks; swapping in tile art later only
   // touches these draw calls, never the collision rects.
@@ -3067,15 +3117,23 @@ function drawMaze(){
     }
   });
 
-  // Exit.
+  // Exit — a green pipe teleporter, same collision box as before but drawn
+  // taller than the tile so it visibly rises out of the floor.
   if(mazeExit){
-    ctx.fillStyle = "#4caf50";
-    ctx.fillRect(mazeExit.x, mazeExit.y, mazeExit.w, mazeExit.h);
-    ctx.fillStyle = "#fff";
-    ctx.font = "bold 16px Arial";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText("EXIT", mazeExit.x + mazeExit.w/2, mazeExit.y + mazeExit.h/2);
+    if(pipeImg.complete && pipeImg.naturalWidth > 0){
+      const pipeW = 70, pipeH = 145;
+      const tileBottom = mazeExit.y + mazeExit.h + 10;
+      const tileCenterX = mazeExit.x - 10 + MAZE_TILE/2;
+      ctx.drawImage(pipeImg, tileCenterX - pipeW/2, tileBottom - pipeH, pipeW, pipeH);
+    } else {
+      ctx.fillStyle = "#4caf50";
+      ctx.fillRect(mazeExit.x, mazeExit.y, mazeExit.w, mazeExit.h);
+      ctx.fillStyle = "#fff";
+      ctx.font = "bold 16px Arial";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("EXIT", mazeExit.x + mazeExit.w/2, mazeExit.y + mazeExit.h/2);
+    }
   }
 
   drawPlayerSpriteFlipped();
