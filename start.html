@@ -293,20 +293,88 @@ function setLevelBackground() {
     `url('${TOPIC_BG[selectedTopic] || "blue.png"}')`;
 }
 
-// ================= LUCKY BLOCK (sprite image) =================
-let luckyBlockReady = false;
+// ================= LUCKY BLOCK (3D isometric Canvas 2D) =================
+let luckyBlockReady = true; // pure canvas — always ready
 let lbAngle = 0;
-const lbImg = new Image();
-lbImg.onload = () => { luckyBlockReady = true; };
-lbImg.src = "Luckyblock.PNG";
 
-function initLuckyBlock() { /* image loads via lbImg.onload above */ }
+function initLuckyBlock() {}
 
 function drawLuckyBlock(x, y, w, h) {
-  if (!luckyBlockReady) return false;
-  lbAngle += 0.05;
-  const bob = Math.sin(lbAngle) * h * 0.06; // gentle up-down bob
-  ctx.drawImage(lbImg, x, y + bob, w, h);
+  lbAngle += 0.04;
+  const bob = Math.sin(lbAngle) * h * 0.07;
+  y = y + bob;
+
+  const depth = h * 0.22; // top-face height
+  const sideW = w * 0.15; // right-face width
+
+  const FRONT   = "#FFD700";
+  const TOP     = "#FFF07A";
+  const SIDE    = "#B8860B";
+  const BORDER  = "#6B4400";
+  const STUD    = "#FFF5A0";
+  const QWHITE  = "#FFFFFF";
+  const QSHADOW = "#B8860B";
+
+  ctx.save();
+
+  // Top face
+  ctx.beginPath();
+  ctx.moveTo(x,           y + depth);
+  ctx.lineTo(x + sideW,   y);
+  ctx.lineTo(x + w,       y);
+  ctx.lineTo(x + w - sideW, y + depth);
+  ctx.closePath();
+  ctx.fillStyle = TOP;
+  ctx.fill();
+  ctx.strokeStyle = BORDER; ctx.lineWidth = 2; ctx.stroke();
+
+  // Right side face
+  ctx.beginPath();
+  ctx.moveTo(x + w,         y);
+  ctx.lineTo(x + w,         y + h - depth);
+  ctx.lineTo(x + w - sideW, y + h);
+  ctx.lineTo(x + w - sideW, y + depth);
+  ctx.closePath();
+  ctx.fillStyle = SIDE;
+  ctx.fill();
+  ctx.strokeStyle = BORDER; ctx.lineWidth = 2; ctx.stroke();
+
+  // Front face
+  const fw = w - sideW;
+  const fy = y + depth;
+  const fh = h - depth;
+  ctx.fillStyle = FRONT;
+  ctx.fillRect(x, fy, fw, fh);
+
+  // Inner border frame
+  const pad = fw * 0.09;
+  ctx.strokeStyle = BORDER;
+  ctx.lineWidth = Math.max(2, fw * 0.065);
+  ctx.strokeRect(x + pad, fy + pad, fw - pad * 2, fh - pad * 2);
+
+  // Corner studs
+  const sr = Math.max(3, fw * 0.09);
+  const ox = fw * 0.18, oy = fh * 0.18;
+  [[x + ox, fy + oy], [x + fw - ox, fy + oy],
+   [x + ox, fy + fh - oy], [x + fw - ox, fy + fh - oy]].forEach(([sx2, sy2]) => {
+    ctx.beginPath(); ctx.arc(sx2, sy2, sr, 0, Math.PI * 2);
+    ctx.fillStyle = STUD; ctx.fill();
+    ctx.strokeStyle = BORDER; ctx.lineWidth = 1.5; ctx.stroke();
+  });
+
+  // ? mark
+  const fontSize = Math.round(fh * 0.52);
+  ctx.font = `900 ${fontSize}px Arial`;
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  const qx = x + fw / 2, qy = fy + fh / 2 + fh * 0.04;
+  ctx.fillStyle = QSHADOW; ctx.fillText("?", qx + 2, qy + 2);
+  ctx.fillStyle = QWHITE;  ctx.fillText("?", qx, qy);
+
+  // Front face outline
+  ctx.strokeStyle = BORDER; ctx.lineWidth = 2;
+  ctx.strokeRect(x, fy, fw, fh);
+
+  ctx.restore();
   return true;
 }
 
