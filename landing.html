@@ -49,6 +49,23 @@
     background: linear-gradient(rgba(75, 0, 16, 0.82), rgba(75, 0, 16, 0.88));
   }
 
+  /* Alternating red/yellow section tint: About=red, Creators=yellow, Support=red, CTA=yellow */
+  #creators::before, #cta::before {
+    background: linear-gradient(rgba(92, 68, 0, 0.82), rgba(92, 68, 0, 0.88));
+  }
+
+  #creators .panel, #cta .panel {
+    border-color: #E63946;
+  }
+
+  #cta .cta-btn {
+    border-color: #E63946;
+  }
+
+  #creators .creator-photo {
+    border-color: #E63946;
+  }
+
   #about { background-image: url("landing-bg-daytime.png"); }
   #creators { background-image: url("landing-bg-albertus.png"); }
   #support { background-image: url("landing-bg-garden.png"); }
@@ -283,6 +300,14 @@
     justify-content: center;
     font-size: 24px;
     color: #FFD700;
+    overflow: hidden;
+  }
+
+  .creator-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center top;
   }
 
   .creator-name {
@@ -387,6 +412,10 @@
 
     <div class="carousel-track" id="aboutTrack" tabindex="0">
       <div class="panel carousel-slide">
+        <h2>About the Project</h2>
+        <p>EduQueSCT (&ldquo;Skill Check Training&rdquo;) is a free, browser-based review game that turns exam prep for Math, English/Reading, and Science into an actual adventure &mdash; pick a topic, then play through a platformer, a maze, and a side-scroller to earn points and reinforce what you've learned.</p>
+      </div>
+      <div class="panel carousel-slide">
         <h2>Problem Statement</h2>
         <p>Many students struggle to keep up with lessons, and long, text-heavy materials often cause disengagement. A 2024 Philippine Statistics Authority survey found a 93.1% basic literacy rate but only 70.8% functional literacy &mdash; showing many Filipinos still struggle to apply what they learn. This gap isn't unique to the Philippines; several countries, especially in sub-Saharan Africa, face similar literacy challenges.</p>
       </div>
@@ -411,6 +440,7 @@
       <button class="carousel-dot" data-index="1" aria-label="Go to slide 2"></button>
       <button class="carousel-dot" data-index="2" aria-label="Go to slide 3"></button>
       <button class="carousel-dot" data-index="3" aria-label="Go to slide 4"></button>
+      <button class="carousel-dot" data-index="4" aria-label="Go to slide 5"></button>
     </div>
   </div>
   <div class="section-seam"></div>
@@ -420,32 +450,27 @@
   <div class="panel">
     <h2>The Creators</h2>
     <p>Meet the team behind EduQueSCT.</p>
-    <!-- TODO: replace with real creator info (names, roles, photos) -->
     <div class="creator-gallery">
       <div class="creator-card">
-        <div class="creator-photo">?</div>
-        <div class="creator-name">Creator 1</div>
-        <div class="creator-role">Role TBD</div>
+        <div class="creator-photo"><img src="Aleks.PNG" alt="Aleksandra Vasquez"></div>
+        <div class="creator-name">Aleksandra Vasquez</div>
       </div>
       <div class="creator-card">
-        <div class="creator-photo">?</div>
-        <div class="creator-name">Creator 2</div>
-        <div class="creator-role">Role TBD</div>
+        <div class="creator-photo"><img src="Jeayanne.PNG" alt="Jeayanne Olandria"></div>
+        <div class="creator-name">Jeayanne Olandria</div>
       </div>
       <div class="creator-card">
-        <div class="creator-photo">?</div>
-        <div class="creator-name">Creator 3</div>
-        <div class="creator-role">Role TBD</div>
+        <div class="creator-photo"><img src="Gian.PNG" alt="Gian Balba"></div>
+        <div class="creator-name">Gian Balba</div>
+        <div class="creator-role">Head Developer and Programmer</div>
       </div>
       <div class="creator-card">
-        <div class="creator-photo">?</div>
-        <div class="creator-name">Creator 4</div>
-        <div class="creator-role">Role TBD</div>
+        <div class="creator-photo"><img src="Jaliyah.PNG" alt="Jaliyah Reyes"></div>
+        <div class="creator-name">Jaliyah Reyes</div>
       </div>
       <div class="creator-card">
-        <div class="creator-photo">?</div>
-        <div class="creator-name">Creator 5</div>
-        <div class="creator-role">Role TBD</div>
+        <div class="creator-photo"><img src="Samantha.PNG" alt="Samantha Del Rosario"></div>
+        <div class="creator-name">Samantha Del Rosario</div>
       </div>
     </div>
   </div>
@@ -522,7 +547,7 @@ document.querySelectorAll(".reveal").forEach(el => revealObserver.observe(el));
   if (reduceMotion) track.style.scrollBehavior = "auto";
 
   function scrollToIndex(i) {
-    i = Math.max(0, Math.min(slides.length - 1, i));
+    i = ((i % slides.length) + slides.length) % slides.length;
     track.scrollTo({ left: slides[i].offsetLeft - track.offsetLeft, behavior: reduceMotion ? "auto" : "smooth" });
   }
   function setActiveDot(i) { dots.forEach((d, idx) => d.classList.toggle("active", idx === i)); }
@@ -537,9 +562,25 @@ document.querySelectorAll(".reveal").forEach(el => revealObserver.observe(el));
     return closest;
   }
 
-  prevBtn.addEventListener("click", () => scrollToIndex(currentIndex() - 1));
-  nextBtn.addEventListener("click", () => scrollToIndex(currentIndex() + 1));
-  dots.forEach(dot => dot.addEventListener("click", () => scrollToIndex(Number(dot.dataset.index))));
+  const AUTOPLAY_MS = 5000;
+  let autoplayTimer = null;
+  function stopAutoplay() { if (autoplayTimer) { clearInterval(autoplayTimer); autoplayTimer = null; } }
+  function startAutoplay() {
+    if (reduceMotion) return;
+    stopAutoplay();
+    autoplayTimer = setInterval(() => scrollToIndex(currentIndex() + 1), AUTOPLAY_MS);
+  }
+  function resetAutoplay() { stopAutoplay(); startAutoplay(); }
+
+  prevBtn.addEventListener("click", () => { scrollToIndex(currentIndex() - 1); resetAutoplay(); });
+  nextBtn.addEventListener("click", () => { scrollToIndex(currentIndex() + 1); resetAutoplay(); });
+  dots.forEach(dot => dot.addEventListener("click", () => { scrollToIndex(Number(dot.dataset.index)); resetAutoplay(); }));
+
+  const wrapper = track.closest(".about-carousel");
+  wrapper.addEventListener("pointerenter", stopAutoplay);
+  wrapper.addEventListener("pointerleave", startAutoplay);
+  wrapper.addEventListener("pointerdown", stopAutoplay);
+  wrapper.addEventListener("pointerup", startAutoplay);
 
   let dotRaf = false;
   track.addEventListener("scroll", () => {
@@ -549,11 +590,12 @@ document.querySelectorAll(".reveal").forEach(el => revealObserver.observe(el));
   });
 
   track.addEventListener("keydown", (e) => {
-    if (e.key === "ArrowRight") { e.preventDefault(); scrollToIndex(currentIndex() + 1); }
-    if (e.key === "ArrowLeft") { e.preventDefault(); scrollToIndex(currentIndex() - 1); }
+    if (e.key === "ArrowRight") { e.preventDefault(); scrollToIndex(currentIndex() + 1); resetAutoplay(); }
+    if (e.key === "ArrowLeft") { e.preventDefault(); scrollToIndex(currentIndex() - 1); resetAutoplay(); }
   });
 
   setActiveDot(0);
+  startAutoplay();
 })();
 
 // ================= DRAG-TO-PAN HERO ART (Pointer Events) =================
