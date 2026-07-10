@@ -134,6 +134,44 @@ canvas {
   color: #ddd;
 }
 
+#quizExplain {
+  display: none;
+  align-items: center;
+  gap: 14px;
+  margin-top: 14px;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 2px solid #FFD700;
+  border-radius: 14px;
+  text-align: left;
+}
+
+#quizDomie {
+  width: 64px;
+  height: auto;
+  flex-shrink: 0;
+  image-rendering: pixelated;
+}
+
+#quizExplainText {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+#quizContinueBtn {
+  display: none;
+  margin-top: 14px;
+  width: 100%;
+}
+
+#countdownNumber {
+  font-family: 'Press Start 2P', cursive;
+  font-size: 96px;
+  color: #FFD700;
+  text-shadow: 4px 4px 0 #000, 0 0 30px rgba(255,215,0,.7);
+}
+
 /* TOUCH CONTROLS — shown only on touch devices (no mouse hover, coarse pointer) */
 #touchControls { display: none; }
 @media (hover: none) and (pointer: coarse) {
@@ -238,7 +276,16 @@ body[data-mode="maze"] #touchJump { display: none; }
     <p id="quizText"></p>
     <div id="quizChoices"></div>
     <p id="quizFeedback"></p>
+    <div id="quizExplain">
+      <img id="quizDomie" src="domie_idle.png" alt="Domie">
+      <p id="quizExplainText"></p>
+    </div>
+    <button id="quizContinueBtn" data-i18n="quiz_continue">Continue</button>
   </div>
+</div>
+
+<div id="countdownOverlay" class="overlay-base">
+  <div id="countdownNumber"></div>
 </div>
 
 <script src="strings.js"></script>
@@ -288,22 +335,6 @@ const PLATFORMER_LAYOUTS = [
   [160,200,240,200,160,200,240,200,160,200]  // Wave
 ];
 let platformerLayoutIndex = 0;
-
-const TOPIC_BG = {
-  Biology: "blue.png",
-  Physics: "sunset.png",
-  Geology: "moon.png",
-  Arithmetic: "trees.png",
-  Algebra: "level bg.png",
-  Geometry: "siena.png",
-  Literature: "sunset.png",
-  Grammar: "moon.png"
-};
-
-function setLevelBackground() {
-  document.body.style.backgroundImage =
-    `url('${TOPIC_BG[selectedTopic] || "blue.png"}')`;
-}
 
 // ================= LUCKY BLOCK (3D isometric Canvas 2D) =================
 let luckyBlockReady = true; // pure canvas — always ready
@@ -402,17 +433,20 @@ Biology: {
     {
       text: "What is the main organ responsible for gas exchange?",
       choices: ["Lungs", "Bronchi", "Heart", "Trachea"],
-      correct: 1
+      correct: 1,
+      explain: "The lungs are where oxygen moves into the blood and carbon dioxide moves out."
     },
     {
       text: "What organ pumps blood?",
       choices: ["Veins", "Arteries", "Brain", "Heart"],
-      correct: 4
+      correct: 4,
+      explain: "The heart is the muscular pump that pushes blood through the whole body."
     },
     {
       text: "What are the different forms of a gene called?",
       choices: ["Phenotype", "Genotype", "Alleles", "Punnett Square"],
-      correct: 3
+      correct: 3,
+      explain: "Alleles are the different versions of a gene, like one for tall and one for short."
     },
     {
       text: "What is biodiversity?",
@@ -422,62 +456,74 @@ Biology: {
         "Where one species rules the area",
         "A community full of the same animals"
       ],
-      correct: 1
+      correct: 1,
+      explain: "Biodiversity means having a wide variety of living organisms in an ecosystem."
     },
     {
       text: "What is the gas needed for photosynthesis?",
       choices: ["Oxygen", "Carbon Dioxide", "Nitrogen", "Hydrogen"],
-      correct: 2
+      correct: 2,
+      explain: "Plants take in carbon dioxide and use it to build sugars during photosynthesis."
     },
     {
       text: "Which cell part controls the activities of the cell?",
       choices: ["Nucleus", "Cell wall", "Cytoplasm", "Ribosome"],
-      correct: 1
+      correct: 1,
+      explain: "The nucleus acts like the cell's control center, directing its activities."
     },
     {
       text: "What gas do plants release during photosynthesis?",
       choices: ["Carbon dioxide", "Oxygen", "Nitrogen", "Water vapor"],
-      correct: 2
+      correct: 2,
+      explain: "Photosynthesis produces oxygen as a byproduct while making food from carbon dioxide and water."
     },
     {
       text: "Which blood cells help fight infection?",
       choices: ["Red blood cells", "White blood cells", "Platelets", "Plasma"],
-      correct: 2
+      correct: 2,
+      explain: "White blood cells are the immune system's main defenders against infection."
     },
     {
       text: "What is the basic unit of life?",
       choices: ["Tissue", "Organ", "Cell", "Atom"],
-      correct: 3
+      correct: 3,
+      explain: "The cell is the smallest structural and functional unit that makes up all living things."
     },
     {
       text: "Which organ is part of the digestive system?",
       choices: ["Lungs", "Stomach", "Heart", "Kidney"],
-      correct: 2
+      correct: 2,
+      explain: "The stomach breaks down food as part of the digestive system."
     },
     {
       text: "What do we call animals that eat only plants?",
       choices: ["Carnivores", "Herbivores", "Omnivores", "Decomposers"],
-      correct: 2
+      correct: 2,
+      explain: "Herbivores are animals whose diet consists only of plants."
     },
     {
       text: "Which part of the plant absorbs water from the soil?",
       choices: ["Leaves", "Stem", "Roots", "Flower"],
-      correct: 3
+      correct: 3,
+      explain: "Roots draw water and nutrients up from the soil into the plant."
     },
     {
       text: "What gas do humans need to breathe in to survive?",
       choices: ["Carbon dioxide", "Oxygen", "Helium", "Hydrogen"],
-      correct: 2
+      correct: 2,
+      explain: "Humans need oxygen for cellular respiration to release energy from food."
     },
     {
       text: "What is the green pigment in plants called?",
       choices: ["Melanin", "Chlorophyll", "Hemoglobin", "Keratin"],
-      correct: 2
+      correct: 2,
+      explain: "Chlorophyll is the pigment that gives plants their green color and captures light energy."
     },
     {
       text: "Which body system includes the brain and nerves?",
       choices: ["Respiratory", "Nervous", "Circulatory", "Digestive"],
-      correct: 2
+      correct: 2,
+      explain: "The nervous system, made up of the brain and nerves, controls the body's responses."
     }
   ],
 
@@ -490,17 +536,20 @@ Biology: {
         "Contracts and moves downward",
         "Expands and moves downward"
       ],
-      correct: 3
+      correct: 3,
+      explain: "The diaphragm contracts and moves downward to make room for air to fill the lungs."
     },
     {
       text: "Which vessel carries blood away from the heart?",
       choices: ["Alveoli", "Veins", "Arteries", "Aorta"],
-      correct: 3
+      correct: 3,
+      explain: "Arteries carry oxygen-rich blood away from the heart to the rest of the body."
     },
     {
       text: "What is the phenotype of Tt when T equals tall?",
       choices: ["Short", "Tall", "20%", "25%"],
-      correct: 2
+      correct: 2,
+      explain: "Since T (tall) is dominant, a Tt genotype shows the tall phenotype."
     },
     {
       text: "Why is biodiversity important?",
@@ -510,62 +559,74 @@ Biology: {
         "It's not",
         "It gives animals a place to stay"
       ],
-      correct: 1
+      correct: 1,
+      explain: "Diverse ecosystems can better withstand disease, disasters, and change, making them more stable."
     },
     {
       text: "What is the pigment that absorbs sunlight?",
       choices: ["Chlorophyll", "Acrylic", "Stoma", "Melanin"],
-      correct: 1
+      correct: 1,
+      explain: "Chlorophyll absorbs sunlight and converts its energy for use in photosynthesis."
     },
     {
       text: "What is the powerhouse of the cell?",
       choices: ["Nucleus", "Mitochondria", "Ribosome", "Golgi body"],
-      correct: 2
+      correct: 2,
+      explain: "Mitochondria produce the ATP that powers cell activities, earning them the nickname."
     },
     {
       text: "During cellular respiration, glucose reacts with oxygen to release:",
       choices: ["Energy (ATP)", "Chlorophyll", "Proteins", "Nitrogen"],
-      correct: 1
+      correct: 1,
+      explain: "Cellular respiration breaks down glucose with oxygen to release usable energy as ATP."
     },
     {
       text: "Which molecule carries genetic information?",
       choices: ["DNA", "ATP", "Glucose", "Lipid"],
-      correct: 1
+      correct: 1,
+      explain: "DNA stores the instructions that determine an organism's traits and is passed to offspring."
     },
     {
       text: "What type of blood cell carries oxygen?",
       choices: ["White blood cells", "Platelets", "Red blood cells", "Plasma"],
-      correct: 3
+      correct: 3,
+      explain: "Red blood cells contain hemoglobin, which binds and transports oxygen through the body."
     },
     {
       text: "What is the process by which plants lose water through their leaves?",
       choices: ["Respiration", "Transpiration", "Condensation", "Digestion"],
-      correct: 2
+      correct: 2,
+      explain: "Transpiration is the loss of water vapor through small openings in the leaves."
     },
     {
       text: "In a food chain, organisms that make their own food are called:",
       choices: ["Consumers", "Producers", "Decomposers", "Predators"],
-      correct: 2
+      correct: 2,
+      explain: "Producers, like plants, make their own food through photosynthesis."
     },
     {
       text: "Which organ filters waste from the blood to form urine?",
       choices: ["Liver", "Kidney", "Lungs", "Heart"],
-      correct: 2
+      correct: 2,
+      explain: "The kidneys filter waste products out of the blood to form urine."
     },
     {
       text: "What is the site of photosynthesis in a plant cell?",
       choices: ["Mitochondria", "Nucleus", "Chloroplast", "Vacuole"],
-      correct: 3
+      correct: 3,
+      explain: "Chloroplasts contain chlorophyll and are where photosynthesis takes place in the cell."
     },
     {
       text: "An offspring receives its genes from:",
       choices: ["Only the mother", "Only the father", "Both parents", "Neither parent"],
-      correct: 3
+      correct: 3,
+      explain: "Offspring inherit half their genetic material from each parent."
     },
     {
       text: "What is the largest organ of the human body?",
       choices: ["Liver", "Skin", "Lungs", "Brain"],
-      correct: 2
+      correct: 2,
+      explain: "The skin covers the entire body, making it the largest organ."
     }
   ],
 
@@ -578,7 +639,8 @@ Biology: {
         "Small surface area and thick walls for fast gas exchange",
         "Small surface area and thin walls for fast gas exchange"
       ],
-      correct: 1
+      correct: 1,
+      explain: "Thin walls and a large surface area let gases pass quickly between air and blood."
     },
     {
       text: "What process in the circulatory system transports oxygen, nutrients, hormones, and removes wastes?",
@@ -588,12 +650,14 @@ Biology: {
         "Circulation of the circulatory system",
         "System circulation"
       ],
-      correct: 1
+      correct: 1,
+      explain: "Systemic circulation carries oxygen, nutrients, and hormones to the body and removes waste."
     },
     {
       text: "When both parents are heterozygous Bb (B = Brown allele, b = Blue allele), what is the probability of their child having blue eyes?",
       choices: ["0%", "25%", "50%", "100%"],
-      correct: 2
+      correct: 2,
+      explain: "With Bb x Bb, the ratio is 1 BB : 2 Bb : 1 bb, so 25% are bb (blue)."
     },
     {
       text: "Which of the following are the best examples of the effects of habitat destruction?",
@@ -603,7 +667,8 @@ Biology: {
         "Makes way for other species to have a home",
         "Increases reproduction and creates safe habitats"
       ],
-      correct: 1
+      correct: 1,
+      explain: "Destroying habitats removes shelter and resources, raising extinction risk and upsetting ecosystem balance."
     },
     {
       text: "Why does light intensity affect photosynthesis?",
@@ -613,57 +678,68 @@ Biology: {
         "It gives plants warmth",
         "More light = more energy"
       ],
-      correct: 4
+      correct: 4,
+      explain: "More light provides more energy for the light-dependent reactions of photosynthesis."
     },
     {
       text: "Which process produces gametes with half the chromosome number?",
       choices: ["Mitosis", "Meiosis", "Binary fission", "Replication"],
-      correct: 2
+      correct: 2,
+      explain: "Meiosis divides the chromosome number in half to produce gametes like sperm and eggs."
     },
     {
       text: "What is the complementary base of adenine in DNA?",
       choices: ["Guanine", "Cytosine", "Thymine", "Uracil"],
-      correct: 3
+      correct: 3,
+      explain: "In DNA, adenine always pairs with thymine."
     },
     {
       text: "In Mendel's law of segregation, allele pairs separate during:",
       choices: ["Fertilization", "Gamete formation", "Digestion", "Mitosis"],
-      correct: 2
+      correct: 2,
+      explain: "During gamete formation (meiosis), homologous chromosome pairs separate from each other."
     },
     {
       text: "Which organelle is responsible for protein synthesis?",
       choices: ["Ribosome", "Lysosome", "Vacuole", "Golgi body"],
-      correct: 1
+      correct: 1,
+      explain: "Ribosomes are the cell structures that assemble proteins from amino acids."
     },
     {
       text: "The main products of glycolysis include:",
       choices: ["Pyruvate and ATP", "Only oxygen", "Only water", "Chlorophyll"],
-      correct: 1
+      correct: 1,
+      explain: "Glycolysis breaks down glucose into pyruvate while producing a small amount of ATP."
     },
     {
       text: "A change in the DNA sequence of an organism is called a:",
       choices: ["Adaptation", "Mutation", "Migration", "Selection"],
-      correct: 2
+      correct: 2,
+      explain: "A mutation is any change in an organism's DNA sequence."
     },
     {
       text: "Which biomolecule is the main long-term energy store in animals?",
       choices: ["Glucose", "Fat (lipids)", "Protein", "Nucleic acid"],
-      correct: 2
+      correct: 2,
+      explain: "Fat (lipids) store more energy per gram than other biomolecules, making them the main long-term energy reserve."
     },
     {
       text: "The theory of natural selection was proposed by:",
       choices: ["Gregor Mendel", "Charles Darwin", "Louis Pasteur", "Robert Hooke"],
-      correct: 2
+      correct: 2,
+      explain: "Charles Darwin proposed that species evolve through natural selection."
     },
     {
       text: "Gas exchange in the lungs occurs mainly by:",
       choices: ["Active transport", "Diffusion", "Osmosis", "Filtration"],
-      correct: 2
+      correct: 2,
+      explain: "Gas exchange happens as oxygen and carbon dioxide diffuse across the thin alveolar walls."
     },
     {
       text: "Which trophic level has the most available energy?",
       choices: ["Producers", "Primary consumers", "Secondary consumers", "Tertiary consumers"],
-      correct: 1
+      correct: 1,
+      explain: "Producers hold the most energy in an ecosystem since energy decreases at each higher trophic level."
     }
   ]
 }, // Biology
@@ -673,77 +749,92 @@ Physics: {
     {
       text: "What is the SI unit of force?",
       choices: ["Newton", "Joule", "Watt", "Pascal"],
-      correct: 1
+      correct: 1,
+      explain: "The newton is the SI unit used to measure force."
     },
     {
       text: "Which simple machine is a ramp an example of?",
       choices: ["Lever", "Inclined plane", "Pulley", "Wheel and axle"],
-      correct: 2
+      correct: 2,
+      explain: "An inclined plane, like a ramp, lets a smaller force move an object over a longer distance."
     },
     {
       text: "What happens to the speed of an object when a net force acts on it in the direction of motion?",
       choices: ["It decreases", "It stays the same", "It increases", "It becomes zero"],
-      correct: 3
+      correct: 3,
+      explain: "An unbalanced force acting in the direction of motion speeds the object up."
     },
     {
       text: "Which state of matter has a fixed volume but takes the shape of its container?",
       choices: ["Solid", "Liquid", "Gas", "Plasma"],
-      correct: 2
+      correct: 2,
+      explain: "A liquid keeps its volume but takes on the shape of whatever container holds it."
     },
     {
       text: "What is the formula for speed?",
       choices: ["distance x time", "distance / time", "time / distance", "mass x acceleration"],
-      correct: 2
+      correct: 2,
+      explain: "Speed is calculated by dividing the distance traveled by the time it took."
     },
     {
       text: "What is the SI unit of energy?",
       choices: ["Newton", "Joule", "Watt", "Ohm"],
-      correct: 2
+      correct: 2,
+      explain: "The joule is the SI unit used to measure energy."
     },
     {
       text: "Which of these is a form of energy?",
       choices: ["Meter", "Kilogram", "Heat", "Second"],
-      correct: 3
+      correct: 3,
+      explain: "Heat is a form of energy, unlike the other listed units of measurement."
     },
     {
       text: "What force pulls objects toward the Earth?",
       choices: ["Friction", "Magnetism", "Gravity", "Tension"],
-      correct: 3
+      correct: 3,
+      explain: "Gravity is the force that pulls objects down toward the Earth."
     },
     {
       text: "A push or a pull is called a:",
       choices: ["Mass", "Force", "Speed", "Weight"],
-      correct: 2
+      correct: 2,
+      explain: "A force is any push or pull applied to an object."
     },
     {
       text: "Which instrument measures temperature?",
       choices: ["Barometer", "Thermometer", "Ammeter", "Ruler"],
-      correct: 2
+      correct: 2,
+      explain: "A thermometer is the tool used to measure temperature."
     },
     {
       text: "What is the change from a solid to a liquid called?",
       choices: ["Freezing", "Melting", "Evaporation", "Condensation"],
-      correct: 2
+      correct: 2,
+      explain: "Melting is the change of state from solid to liquid as heat is added."
     },
     {
       text: "Sound travels fastest through which medium?",
       choices: ["Air", "Water", "A solid", "A vacuum"],
-      correct: 3
+      correct: 3,
+      explain: "Sound waves travel fastest through solids because their particles are packed tightly together."
     },
     {
       text: "Which simple machine is a see-saw an example of?",
       choices: ["Lever", "Pulley", "Wedge", "Screw"],
-      correct: 1
+      correct: 1,
+      explain: "A see-saw pivots around a fixed point, making it a lever."
     },
     {
       text: "What do we call the energy of a moving object?",
       choices: ["Potential energy", "Kinetic energy", "Chemical energy", "Nuclear energy"],
-      correct: 2
+      correct: 2,
+      explain: "Kinetic energy is the energy an object has because it is moving."
     },
     {
       text: "What is the SI unit of length?",
       choices: ["Gram", "Second", "Meter", "Liter"],
-      correct: 3
+      correct: 3,
+      explain: "The meter is the SI base unit used to measure length."
     }
   ],
 
@@ -751,77 +842,92 @@ Physics: {
     {
       text: "Newton's First Law states that an object at rest stays at rest unless acted on by what?",
       choices: ["Gravity", "An unbalanced force", "Friction", "Mass"],
-      correct: 2
+      correct: 2,
+      explain: "An unbalanced force is needed to change the motion of an object at rest."
     },
     {
       text: "According to Newton's Second Law, force equals mass times what?",
       choices: ["Velocity", "Acceleration", "Distance", "Time"],
-      correct: 2
+      correct: 2,
+      explain: "Newton's Second Law states that force equals mass times acceleration."
     },
     {
       text: "What does a flat horizontal line on a distance-time graph represent?",
       choices: ["Constant speed", "Acceleration", "The object is not moving", "Deceleration"],
-      correct: 3
+      correct: 3,
+      explain: "A flat line on a distance-time graph means distance isn't changing, so the object is at rest."
     },
     {
       text: "What is the unit of work/energy?",
       choices: ["Newton", "Watt", "Joule", "Ampere"],
-      correct: 3
+      correct: 3,
+      explain: "The joule is the unit used to measure work and energy."
     },
     {
       text: "Which law states that for every action there is an equal and opposite reaction?",
       choices: ["Newton's First Law", "Newton's Second Law", "Newton's Third Law", "Law of Conservation of Energy"],
-      correct: 3
+      correct: 3,
+      explain: "Newton's Third Law says every action has an equal and opposite reaction force."
     },
     {
       text: "What is the approximate acceleration due to gravity on Earth?",
       choices: ["5 m/s²", "9.8 m/s²", "20 m/s²", "1 m/s²"],
-      correct: 2
+      correct: 2,
+      explain: "Earth's gravity accelerates falling objects at about 9.8 meters per second squared."
     },
     {
       text: "The SI unit of power is the:",
       choices: ["Joule", "Newton", "Watt", "Pascal"],
-      correct: 3
+      correct: 3,
+      explain: "The watt is the SI unit used to measure power, the rate of doing work."
     },
     {
       text: "Weight is calculated as mass times what?",
       choices: ["Velocity", "Acceleration due to gravity", "Distance", "Area"],
-      correct: 2
+      correct: 2,
+      explain: "Weight equals mass multiplied by the acceleration due to gravity."
     },
     {
       text: "Which quantity has both magnitude and direction?",
       choices: ["Scalar", "Vector", "Distance", "Speed"],
-      correct: 2
+      correct: 2,
+      explain: "A vector has both a size (magnitude) and a direction, unlike a scalar."
     },
     {
       text: "The tendency of an object to resist a change in its motion is called:",
       choices: ["Momentum", "Inertia", "Friction", "Gravity"],
-      correct: 2
+      correct: 2,
+      explain: "Inertia is an object's tendency to keep doing whatever it was already doing."
     },
     {
       text: "What kind of energy is stored in a stretched spring?",
       choices: ["Kinetic", "Potential", "Thermal", "Sound"],
-      correct: 2
+      correct: 2,
+      explain: "A stretched spring stores potential energy that can later do work."
     },
     {
       text: "On a speed-time graph, a straight line sloping upward shows:",
       choices: ["Constant speed", "Acceleration", "Rest", "Deceleration"],
-      correct: 2
+      correct: 2,
+      explain: "An upward-sloping straight line on a speed-time graph shows the speed is increasing, or accelerating."
     },
     {
       text: "What force opposes motion between two surfaces in contact?",
       choices: ["Gravity", "Friction", "Tension", "Magnetism"],
-      correct: 2
+      correct: 2,
+      explain: "Friction is the force that resists sliding motion between two surfaces in contact."
     },
     {
       text: "If an object's velocity does not change, its acceleration is:",
       choices: ["Increasing", "Zero", "Negative", "Maximum"],
-      correct: 2
+      correct: 2,
+      explain: "Zero acceleration means the object's velocity is staying constant."
     },
     {
       text: "Energy from the Sun reaches Earth mainly by:",
       choices: ["Sound", "Radiation", "Conduction", "Convection"],
-      correct: 2
+      correct: 2,
+      explain: "The Sun's energy travels to Earth through space mainly as radiation."
     }
   ],
 
@@ -829,7 +935,8 @@ Physics: {
     {
       text: "What is the formula for momentum?",
       choices: ["mass x velocity", "mass / velocity", "force x distance", "mass x acceleration"],
-      correct: 1
+      correct: 1,
+      explain: "Momentum is calculated by multiplying an object's mass by its velocity."
     },
     {
       text: "According to the Law of Conservation of Energy, energy can be:",
@@ -839,72 +946,86 @@ Physics: {
         "Neither created nor destroyed, only transformed",
         "Both created and destroyed"
       ],
-      correct: 3
+      correct: 3,
+      explain: "Energy can only change form; the total amount in a closed system stays constant."
     },
     {
       text: "What type of wave requires a medium to travel through?",
       choices: ["Electromagnetic wave", "Mechanical wave", "Light wave", "Radio wave"],
-      correct: 2
+      correct: 2,
+      explain: "A mechanical wave, like sound, needs a medium such as air or water to travel through."
     },
     {
       text: "In a simple circuit, what is the unit of electrical resistance?",
       choices: ["Volt", "Ampere", "Ohm", "Watt"],
-      correct: 3
+      correct: 3,
+      explain: "The ohm is the unit used to measure electrical resistance."
     },
     {
       text: "What is the relationship in Ohm's Law between voltage (V), current (I), and resistance (R)?",
       choices: ["V = I / R", "V = I x R", "V = R / I", "V = I + R"],
-      correct: 2
+      correct: 2,
+      explain: "Ohm's Law states voltage equals current multiplied by resistance (V = I x R)."
     },
     {
       text: "The number of complete waves passing a point each second is the:",
       choices: ["Wavelength", "Frequency", "Amplitude", "Period"],
-      correct: 2
+      correct: 2,
+      explain: "Frequency is the number of complete wave cycles passing a point every second."
     },
     {
       text: "Which unit measures frequency?",
       choices: ["Hertz", "Joule", "Watt", "Newton"],
-      correct: 1
+      correct: 1,
+      explain: "The hertz is the unit used to measure frequency."
     },
     {
       text: "Kinetic energy is calculated using which formula?",
       choices: ["mgh", "½mv²", "mv", "Fd"],
-      correct: 2
+      correct: 2,
+      explain: "Kinetic energy equals one-half times mass times velocity squared (½mv²)."
     },
     {
       text: "In a series circuit, the current is:",
       choices: ["Different at each point", "The same throughout", "Always zero", "Always increasing"],
-      correct: 2
+      correct: 2,
+      explain: "In a series circuit, the same current flows through every point since there's only one path."
     },
     {
       text: "The bending of light as it passes from one medium into another is called:",
       choices: ["Reflection", "Refraction", "Diffraction", "Absorption"],
-      correct: 2
+      correct: 2,
+      explain: "Refraction is the bending of light as it moves between two different mediums."
     },
     {
       text: "Electric power is calculated as:",
       choices: ["V × I", "V / I", "I / V", "V + I"],
-      correct: 1
+      correct: 1,
+      explain: "Electric power is found by multiplying voltage by current (V × I)."
     },
     {
       text: "What type of wave is a sound wave?",
       choices: ["Transverse", "Longitudinal", "Electromagnetic", "Surface"],
-      correct: 2
+      correct: 2,
+      explain: "Sound is a longitudinal wave because its particles vibrate parallel to the direction it travels."
     },
     {
       text: "Gravitational potential energy depends on mass, gravity, and:",
       choices: ["Speed", "Height", "Charge", "Volume"],
-      correct: 2
+      correct: 2,
+      explain: "Gravitational potential energy depends on an object's mass, gravity, and its height above the ground."
     },
     {
       text: "Doubling the voltage across a fixed resistance will:",
       choices: ["Halve the current", "Double the current", "Not change the current", "Stop the current"],
-      correct: 2
+      correct: 2,
+      explain: "Doubling voltage while keeping resistance fixed doubles the current, following Ohm's Law."
     },
     {
       text: "Which color of visible light has the longest wavelength?",
       choices: ["Blue", "Green", "Red", "Violet"],
-      correct: 3
+      correct: 3,
+      explain: "Red light has the longest wavelength of the visible light colors."
     }
   ]
 }, // Physics
@@ -914,77 +1035,92 @@ Geology: {
     {
       text: "Which type of rock forms from cooled magma or lava?",
       choices: ["Sedimentary", "Igneous", "Metamorphic", "Fossil"],
-      correct: 2
+      correct: 2,
+      explain: "Igneous rock forms when magma or lava cools and solidifies."
     },
     {
       text: "What is Earth's outermost layer called?",
       choices: ["Core", "Mantle", "Crust", "Atmosphere"],
-      correct: 3
+      correct: 3,
+      explain: "The crust is the thin, outermost layer of the Earth."
     },
     {
       text: "Which rock type forms from compacted layers of sediment?",
       choices: ["Igneous", "Sedimentary", "Metamorphic", "Volcanic"],
-      correct: 2
+      correct: 2,
+      explain: "Sedimentary rock forms as layers of sediment are compacted and cemented together over time."
     },
     {
       text: "What is the layer of Earth located between the crust and the core called?",
       choices: ["Mantle", "Crust", "Lithosphere", "Atmosphere"],
-      correct: 1
+      correct: 1,
+      explain: "The mantle is the thick layer located between the crust and the core."
     },
     {
       text: "What process changes one rock type into another through heat and pressure?",
       choices: ["Erosion", "Weathering", "Metamorphism", "Deposition"],
-      correct: 3
+      correct: 3,
+      explain: "Metamorphism uses heat and pressure to transform existing rock into a new rock type."
     },
     {
       text: "What is the hot molten rock beneath Earth's surface called?",
       choices: ["Lava", "Magma", "Sediment", "Ash"],
-      correct: 2
+      correct: 2,
+      explain: "Magma is the term for molten rock while it is still underground."
     },
     {
       text: "What is molten rock that has reached the surface called?",
       choices: ["Magma", "Lava", "Crust", "Granite"],
-      correct: 2
+      correct: 2,
+      explain: "Lava is the name for molten rock once it has erupted onto the surface."
     },
     {
       text: "Which is the innermost layer of the Earth?",
       choices: ["Crust", "Mantle", "Core", "Lithosphere"],
-      correct: 3
+      correct: 3,
+      explain: "The core is the Earth's innermost, and hottest, layer."
     },
     {
       text: "A scientist who studies rocks and the Earth is a:",
       choices: ["Biologist", "Geologist", "Chemist", "Astronomer"],
-      correct: 2
+      correct: 2,
+      explain: "A geologist is a scientist who studies rocks and the structure of the Earth."
     },
     {
       text: "Which of these is a fossil fuel?",
       choices: ["Water", "Coal", "Granite", "Sand"],
-      correct: 2
+      correct: 2,
+      explain: "Coal is a fossil fuel formed from ancient decomposed plant matter."
     },
     {
       text: "What natural event is caused by the sudden movement of Earth's plates?",
       choices: ["Tornado", "Earthquake", "Flood", "Drought"],
-      correct: 2
+      correct: 2,
+      explain: "Sudden movement along Earth's plates releases energy that causes an earthquake."
     },
     {
       text: "Which metamorphic rock is commonly used to make statues?",
       choices: ["Marble", "Sandstone", "Basalt", "Coal"],
-      correct: 1
+      correct: 1,
+      explain: "Marble is a metamorphic rock prized for statues because it's relatively soft and polishes smoothly."
     },
     {
       text: "What do we call the loose surface material in which plants grow?",
       choices: ["Rock", "Soil", "Lava", "Mineral"],
-      correct: 2
+      correct: 2,
+      explain: "Soil is the loose surface layer of the Earth in which plant roots grow."
     },
     {
       text: "An opening in Earth's crust that erupts lava is a:",
       choices: ["Geyser", "Volcano", "Canyon", "Glacier"],
-      correct: 2
+      correct: 2,
+      explain: "A volcano is an opening in the crust through which magma erupts as lava."
     },
     {
       text: "Which of these is a natural solid with a definite chemical makeup?",
       choices: ["Mineral", "Wood", "Plastic", "Glass"],
-      correct: 1
+      correct: 1,
+      explain: "A mineral is a naturally occurring solid with a fixed, definite chemical composition."
     }
   ],
 
@@ -992,77 +1128,92 @@ Geology: {
     {
       text: "What is the theory that Earth's crust is broken into moving plates called?",
       choices: ["Continental drift", "Plate tectonics", "Erosion theory", "Rock cycle theory"],
-      correct: 2
+      correct: 2,
+      explain: "Plate tectonics describes how Earth's crust is divided into moving plates."
     },
     {
       text: "What is the breakdown of rocks into smaller pieces by wind, water, or ice called?",
       choices: ["Deposition", "Weathering", "Metamorphism", "Compaction"],
-      correct: 2
+      correct: 2,
+      explain: "Weathering breaks rocks down into smaller pieces through wind, water, or ice."
     },
     {
       text: "What is the movement of weathered rock material from one place to another called?",
       choices: ["Erosion", "Weathering", "Crystallization", "Melting"],
-      correct: 1
+      correct: 1,
+      explain: "Erosion is the transport of weathered rock material from one location to another."
     },
     {
       text: "Where do most earthquakes occur?",
       choices: ["In the middle of tectonic plates", "Along plate boundaries", "Only in oceans", "Only on mountains"],
-      correct: 2
+      correct: 2,
+      explain: "Most earthquakes happen at plate boundaries, where plates grind against or past each other."
     },
     {
       text: "What instrument is used to measure the strength of an earthquake?",
       choices: ["Barometer", "Seismograph", "Thermometer", "Anemometer"],
-      correct: 2
+      correct: 2,
+      explain: "A seismograph records the vibrations of the ground to measure earthquake strength."
     },
     {
       text: "The rigid outer shell of Earth (crust and upper mantle) is the:",
       choices: ["Asthenosphere", "Lithosphere", "Mesosphere", "Core"],
-      correct: 2
+      correct: 2,
+      explain: "The lithosphere is the rigid outer layer made of the crust and uppermost mantle."
     },
     {
       text: "Which scale is used to measure the magnitude of an earthquake?",
       choices: ["Richter scale", "Mohs scale", "Celsius scale", "pH scale"],
-      correct: 1
+      correct: 1,
+      explain: "The Richter scale measures how much energy an earthquake releases."
     },
     {
       text: "The Mohs scale measures a mineral's:",
       choices: ["Color", "Hardness", "Weight", "Age"],
-      correct: 2
+      correct: 2,
+      explain: "The Mohs scale ranks minerals by how resistant they are to scratching, or hardness."
     },
     {
       text: "Molten rock that cools slowly underground forms rocks with:",
       choices: ["Large crystals", "No crystals", "Layers", "Fossils"],
-      correct: 1
+      correct: 1,
+      explain: "Slow cooling underground gives crystals more time to grow large."
     },
     {
       text: "The point on Earth's surface directly above an earthquake's origin is the:",
       choices: ["Focus", "Epicenter", "Fault", "Ridge"],
-      correct: 2
+      correct: 2,
+      explain: "The epicenter is the point on the surface directly above where an earthquake starts."
     },
     {
       text: "Which agent of erosion slowly carves out valleys as it moves?",
       choices: ["Wind", "Glacier", "Sunlight", "Gravity"],
-      correct: 2
+      correct: 2,
+      explain: "A glacier grinds and carves the land as it slowly moves, forming valleys."
     },
     {
       text: "The continuous process by which rocks change from one type to another is the:",
       choices: ["Water cycle", "Rock cycle", "Carbon cycle", "Nitrogen cycle"],
-      correct: 2
+      correct: 2,
+      explain: "The rock cycle describes rocks continuously changing between igneous, sedimentary, and metamorphic forms."
     },
     {
       text: "A crack in Earth's crust where movement occurs is called a:",
       choices: ["Fault", "Fold", "Vent", "Ridge"],
-      correct: 1
+      correct: 1,
+      explain: "A fault is a crack in the crust where blocks of rock have moved relative to each other."
     },
     {
       text: "Layers of sedimentary rock are called:",
       choices: ["Strata", "Magma", "Plates", "Faults"],
-      correct: 1
+      correct: 1,
+      explain: "Strata are the distinct layers seen in sedimentary rock."
     },
     {
       text: "Which type of rock most commonly contains fossils?",
       choices: ["Igneous", "Sedimentary", "Metamorphic", "Volcanic"],
-      correct: 2
+      correct: 2,
+      explain: "Sedimentary rock often forms in layers that can trap and preserve fossils."
     }
   ],
 
@@ -1070,22 +1221,26 @@ Geology: {
     {
       text: "At which type of plate boundary do two plates move apart from each other?",
       choices: ["Convergent", "Divergent", "Transform", "Subduction"],
-      correct: 2
+      correct: 2,
+      explain: "At a divergent boundary, two plates move apart from one another."
     },
     {
       text: "What type of plate boundary is responsible for the formation of the Himalayan mountains?",
       choices: ["Divergent", "Transform", "Convergent", "Passive margin"],
-      correct: 3
+      correct: 3,
+      explain: "The Himalayas formed where the Indian and Eurasian plates collided, a convergent boundary."
     },
     {
       text: "What method do scientists use to determine the absolute age of rocks using the decay of isotopes?",
       choices: ["Relative dating", "Radiometric dating", "Stratigraphy", "Cross-cutting relationships"],
-      correct: 2
+      correct: 2,
+      explain: "Radiometric dating measures the decay of radioactive isotopes to find a rock's actual age."
     },
     {
       text: "Which type of seismic wave travels fastest and can move through both solids and liquids?",
       choices: ["S-wave", "Surface wave", "P-wave", "Love wave"],
-      correct: 3
+      correct: 3,
+      explain: "P-waves are the fastest seismic waves and can pass through both solids and liquids."
     },
     {
       text: "What is the correct order of geologic time units, from largest to smallest?",
@@ -1095,57 +1250,68 @@ Geology: {
         "Period > Eon > Era > Epoch",
         "Epoch > Period > Era > Eon"
       ],
-      correct: 1
+      correct: 1,
+      explain: "From largest to smallest, geologic time is divided into eons, eras, periods, and epochs."
     },
     {
       text: "When an oceanic plate sinks beneath another plate, the process is called:",
       choices: ["Subduction", "Rifting", "Faulting", "Erosion"],
-      correct: 1
+      correct: 1,
+      explain: "Subduction occurs when a denser oceanic plate sinks beneath another plate."
     },
     {
       text: "The theory that continents were once joined as a single landmass is:",
       choices: ["Plate tectonics", "Continental drift", "Seafloor spreading", "Isostasy"],
-      correct: 2
+      correct: 2,
+      explain: "Continental drift is the idea that continents were once joined together and have since moved apart."
     },
     {
       text: "Which scientist proposed the theory of continental drift?",
       choices: ["Alfred Wegener", "Charles Darwin", "Isaac Newton", "Charles Lyell"],
-      correct: 1
+      correct: 1,
+      explain: "Alfred Wegener first proposed the theory of continental drift."
     },
     {
       text: "S-waves (secondary seismic waves) cannot travel through:",
       choices: ["Solids", "Liquids", "The crust", "The mantle"],
-      correct: 2
+      correct: 2,
+      explain: "S-waves are secondary seismic waves that cannot pass through liquids."
     },
     {
       text: "New oceanic crust forms at mid-ocean ridges through:",
       choices: ["Subduction", "Seafloor spreading", "Weathering", "Deposition"],
-      correct: 2
+      correct: 2,
+      explain: "Seafloor spreading creates new oceanic crust as magma rises at mid-ocean ridges."
     },
     {
       text: "The lowest layer of undisturbed sedimentary rock being the oldest is the law of:",
       choices: ["Superposition", "Uniformitarianism", "Original horizontality", "Faunal succession"],
-      correct: 1
+      correct: 1,
+      explain: "The law of superposition states that in undisturbed layers, the oldest rock lies at the bottom."
     },
     {
       text: "The convection currents that move tectonic plates occur in the:",
       choices: ["Crust", "Mantle", "Inner core", "Atmosphere"],
-      correct: 2
+      correct: 2,
+      explain: "Convection currents in the mantle drive the movement of tectonic plates above."
     },
     {
       text: "Which radioactive isotope is commonly used to date once-living material?",
       choices: ["Carbon-14", "Uranium-238", "Potassium-40", "Lead-206"],
-      correct: 1
+      correct: 1,
+      explain: "Carbon-14 decays at a known rate, making it useful for dating once-living material."
     },
     {
       text: "Mountains formed when crust is compressed and folded are called:",
       choices: ["Fault-block mountains", "Fold mountains", "Volcanic mountains", "Dome mountains"],
-      correct: 2
+      correct: 2,
+      explain: "Fold mountains form when compression squeezes and folds layers of crust."
     },
     {
       text: "A half-life is the time needed for half of a radioactive sample to:",
       choices: ["Decay", "Double", "Melt", "Crystallize"],
-      correct: 1
+      correct: 1,
+      explain: "A half-life is the time it takes for half of a radioactive sample to decay."
     }
   ]
 }, // Geology
@@ -1155,77 +1321,92 @@ Arithmetic: {
     {
       text: "What is 15% of 200?",
       choices: ["15", "30", "45", "60"],
-      correct: 2
+      correct: 2,
+      explain: "15% of 200 is found by multiplying 200 by 0.15, which equals 30."
     },
     {
       text: "What is the greatest common factor (GCF) of 12 and 18?",
       choices: ["2", "3", "6", "9"],
-      correct: 3
+      correct: 3,
+      explain: "6 is the largest number that divides evenly into both 12 and 18."
     },
     {
       text: "Simplify the ratio 8:12 to lowest terms.",
       choices: ["2:3", "4:6", "3:2", "1:2"],
-      correct: 1
+      correct: 1,
+      explain: "Dividing both 8 and 12 by their common factor 4 gives the simplified ratio 2:3."
     },
     {
       text: "What is -7 + 12?",
       choices: ["-19", "-5", "5", "19"],
-      correct: 3
+      correct: 3,
+      explain: "Adding -7 and 12 gives 5, since 12 is 5 more than 7."
     },
     {
       text: "Which fraction is equal to 0.75?",
       choices: ["1/4", "2/3", "3/4", "4/5"],
-      correct: 3
+      correct: 3,
+      explain: "3/4 equals 0.75 because 3 divided by 4 is 0.75."
     },
     {
       text: "What is 25% of 80?",
       choices: ["15", "20", "25", "40"],
-      correct: 2
+      correct: 2,
+      explain: "25% of 80 is found by multiplying 80 by 0.25, which equals 20."
     },
     {
       text: "What is 3/4 + 1/4?",
       choices: ["1/2", "1", "4/8", "2"],
-      correct: 2
+      correct: 2,
+      explain: "3/4 plus 1/4 gives a full whole, which equals 1."
     },
     {
       text: "What is 9 × 6?",
       choices: ["45", "54", "63", "56"],
-      correct: 2
+      correct: 2,
+      explain: "Multiplying 9 by 6 gives 54."
     },
     {
       text: "What is 144 ÷ 12?",
       choices: ["10", "11", "12", "14"],
-      correct: 3
+      correct: 3,
+      explain: "Dividing 144 by 12 gives 12."
     },
     {
       text: "Round 4,678 to the nearest hundred.",
       choices: ["4,600", "4,700", "4,680", "5,000"],
-      correct: 2
+      correct: 2,
+      explain: "4,678 is closer to 4,700 than 4,600 when rounded to the nearest hundred."
     },
     {
       text: "What is the value of 7²?",
       choices: ["14", "49", "21", "77"],
-      correct: 2
+      correct: 2,
+      explain: "7 squared means 7 x 7, which equals 49."
     },
     {
       text: "Which of these numbers is prime?",
       choices: ["9", "15", "17", "21"],
-      correct: 3
+      correct: 3,
+      explain: "17 is prime because its only factors are 1 and itself."
     },
     {
       text: "What is 1/2 of 60?",
       choices: ["20", "25", "30", "35"],
-      correct: 3
+      correct: 3,
+      explain: "Half of 60 is found by dividing 60 by 2, which equals 30."
     },
     {
       text: "What is -8 - 5?",
       choices: ["-3", "-13", "13", "3"],
-      correct: 2
+      correct: 2,
+      explain: "Subtracting 5 from -8 moves further negative, giving -13."
     },
     {
       text: "What is 0.5 written as a percent?",
       choices: ["5%", "50%", "0.5%", "500%"],
-      correct: 2
+      correct: 2,
+      explain: "0.5 is equivalent to 50 out of 100, or 50%."
     }
   ],
 
@@ -1233,77 +1414,92 @@ Arithmetic: {
     {
       text: "What is the least common multiple (LCM) of 6 and 8?",
       choices: ["14", "24", "48", "12"],
-      correct: 2
+      correct: 2,
+      explain: "24 is the smallest number that both 6 and 8 divide into evenly."
     },
     {
       text: "Express 45,000 in scientific notation.",
       choices: ["4.5 × 10³", "4.5 × 10⁴", "45 × 10³", "0.45 × 10⁵"],
-      correct: 2
+      correct: 2,
+      explain: "45,000 written in scientific notation is 4.5 multiplied by 10 to the 4th power."
     },
     {
       text: "A shirt priced at ₱500 is discounted by 20%. What is the sale price?",
       choices: ["₱100", "₱480", "₱400", "₱450"],
-      correct: 3
+      correct: 3,
+      explain: "20% of ₱500 is ₱100 off, so the sale price is ₱500 minus ₱100, or ₱400."
     },
     {
       text: "What is (-3) × (-4) × 2?",
       choices: ["-24", "24", "-14", "14"],
-      correct: 2
+      correct: 2,
+      explain: "Multiplying -3, -4, and 2 gives 24, since two negatives make a positive."
     },
     {
       text: "What is the value of 2⁵?",
       choices: ["10", "16", "25", "32"],
-      correct: 4
+      correct: 4,
+      explain: "2 raised to the 5th power (2×2×2×2×2) equals 32."
     },
     {
       text: "What is 40% of 250?",
       choices: ["80", "100", "120", "125"],
-      correct: 2
+      correct: 2,
+      explain: "40% of 250 is found by multiplying 250 by 0.40, which equals 100."
     },
     {
       text: "What is the value of 3³ + 4²?",
       choices: ["27", "43", "35", "25"],
-      correct: 2
+      correct: 2,
+      explain: "3³ is 27 and 4² is 16, and 27 plus 16 equals 43."
     },
     {
       text: "Simplify 18/24 to lowest terms.",
       choices: ["3/4", "2/3", "6/8", "9/12"],
-      correct: 1
+      correct: 1,
+      explain: "Dividing both 18 and 24 by 6 gives the simplified fraction 3/4."
     },
     {
       text: "What is 2/3 of 90?",
       choices: ["30", "45", "60", "72"],
-      correct: 3
+      correct: 3,
+      explain: "Two-thirds of 90 is found by dividing 90 by 3 and multiplying by 2, giving 60."
     },
     {
       text: "Evaluate: 12 + 8 ÷ 4",
       choices: ["5", "14", "20", "32"],
-      correct: 2
+      correct: 2,
+      explain: "Following order of operations, 8 ÷ 4 = 2 is done first, then 12 + 2 = 14."
     },
     {
       text: "What is √64?",
       choices: ["6", "7", "8", "32"],
-      correct: 3
+      correct: 3,
+      explain: "8 times 8 equals 64, so the square root of 64 is 8."
     },
     {
       text: "What is -15 ÷ 3?",
       choices: ["-5", "5", "-45", "-12"],
-      correct: 1
+      correct: 1,
+      explain: "Dividing -15 by 3 gives -5, since a negative divided by a positive is negative."
     },
     {
       text: "Convert 3/5 to a decimal.",
       choices: ["0.35", "0.6", "0.53", "1.67"],
-      correct: 2
+      correct: 2,
+      explain: "3 divided by 5 equals 0.6 as a decimal."
     },
     {
       text: "What is 5! (5 factorial)?",
       choices: ["25", "60", "120", "720"],
-      correct: 3
+      correct: 3,
+      explain: "5! means 5×4×3×2×1, which equals 120."
     },
     {
       text: "A number increased by 30% becomes 130. What was the original number?",
       choices: ["90", "100", "110", "91"],
-      correct: 2
+      correct: 2,
+      explain: "If 130 is the original number plus 30%, then 130 ÷ 1.30 gives the original value of 100."
     }
   ],
 
@@ -1311,77 +1507,92 @@ Arithmetic: {
     {
       text: "If a car travels 240 km in 3 hours, what is its average speed?",
       choices: ["60 km/h", "70 km/h", "80 km/h", "90 km/h"],
-      correct: 3
+      correct: 3,
+      explain: "Speed equals distance divided by time, so 240 km ÷ 3 hours equals 80 km/h."
     },
     {
       text: "What is the simple interest on ₱10,000 at 5% per year for 2 years?",
       choices: ["₱500", "₱1,000", "₱1,500", "₱2,000"],
-      correct: 2
+      correct: 2,
+      explain: "Simple interest is principal × rate × time: ₱10,000 × 0.05 × 2 = ₱1,000."
     },
     {
       text: "Evaluate: 3 + 6 × (5 + 4) ÷ 3 − 7",
       choices: ["11", "14", "18", "20"],
-      correct: 2
+      correct: 2,
+      explain: "Following order of operations: (5+4)=9, 6×9÷3=18, so 3+18−7 equals 14."
     },
     {
       text: "A recipe uses a 3:5 flour-to-sugar ratio. If you use 20 cups of sugar, how much flour is needed?",
       choices: ["10 cups", "12 cups", "15 cups", "18 cups"],
-      correct: 2
+      correct: 2,
+      explain: "With a 3:5 ratio, 20 cups of sugar scales up by a factor of 4, giving 12 cups of flour."
     },
     {
       text: "What is √144 + √81?",
       choices: ["15", "21", "25", "17"],
-      correct: 2
+      correct: 2,
+      explain: "The square root of 144 is 12 and the square root of 81 is 9, and 12 plus 9 equals 21."
     },
     {
       text: "Compute: 15 − 3 × 2 + 8 ÷ 4",
       choices: ["26", "11", "13", "7"],
-      correct: 2
+      correct: 2,
+      explain: "Following order of operations: 3×2=6, 8÷4=2, so 15−6+2 equals 11."
     },
     {
       text: "What is 20% of 20% of 500?",
       choices: ["20", "50", "100", "200"],
-      correct: 1
+      correct: 1,
+      explain: "20% of 500 is 100, and 20% of 100 is 20."
     },
     {
       text: "What is the simple interest on ₱8,000 at 6% per year for 3 years?",
       choices: ["₱1,200", "₱1,440", "₱480", "₱2,400"],
-      correct: 2
+      correct: 2,
+      explain: "Simple interest is principal × rate × time: ₱8,000 × 0.06 × 3 = ₱1,440."
     },
     {
       text: "If 5 pencils cost ₱35, how much do 8 pencils cost?",
       choices: ["₱48", "₱56", "₱63", "₱40"],
-      correct: 2
+      correct: 2,
+      explain: "₱35 for 5 pencils is ₱7 each, so 8 pencils cost 8 × ₱7, or ₱56."
     },
     {
       text: "What is 2⁶ ÷ 2³?",
       choices: ["2", "4", "8", "16"],
-      correct: 3
+      correct: 3,
+      explain: "Dividing powers with the same base subtracts exponents: 2⁶ ÷ 2³ = 2³, which is 8."
     },
     {
       text: "On a map, 1 cm represents 50 km. How many km does 4 cm represent?",
       choices: ["100", "150", "200", "250"],
-      correct: 3
+      correct: 3,
+      explain: "Since 1 cm represents 50 km, 4 cm represents 4 × 50, or 200 km."
     },
     {
       text: "Increase 80 by 25%, then decrease the result by 20%. The answer is:",
       choices: ["76", "80", "84", "100"],
-      correct: 2
+      correct: 2,
+      explain: "80 increased by 25% is 100; 100 decreased by 20% is 80."
     },
     {
       text: "What is the average of 12, 18, and 24?",
       choices: ["16", "18", "20", "54"],
-      correct: 2
+      correct: 2,
+      explain: "The average of 12, 18, and 24 is their sum, 54, divided by 3, which equals 18."
     },
     {
       text: "A jacket costs ₱1,200 after a 25% discount. What was the original price?",
       choices: ["₱1,500", "₱1,600", "₱1,450", "₱1,000"],
-      correct: 2
+      correct: 2,
+      explain: "If ₱1,200 is 75% of the original price, the original price is ₱1,200 ÷ 0.75, or ₱1,600."
     },
     {
       text: "What is 7/8 expressed as a percent?",
       choices: ["78%", "87.5%", "85%", "80%"],
-      correct: 2
+      correct: 2,
+      explain: "7 divided by 8 equals 0.875, which is 87.5% as a percent."
     }
   ]
 }, // Arithmetic
@@ -1391,77 +1602,92 @@ Algebra: {
     {
       text: "Solve for x: x + 7 = 15",
       choices: ["6", "7", "8", "22"],
-      correct: 3
+      correct: 3,
+      explain: "Subtracting 7 from both sides of x + 7 = 15 gives x = 8."
     },
     {
       text: "Simplify: 3x + 5x",
       choices: ["8x", "15x", "8x²", "2x"],
-      correct: 1
+      correct: 1,
+      explain: "3x and 5x are like terms, so adding their coefficients gives 8x."
     },
     {
       text: "If y = 4, what is 3y − 2?",
       choices: ["10", "12", "14", "9"],
-      correct: 1
+      correct: 1,
+      explain: "Substituting y = 4 gives 3(4) − 2, which equals 10."
     },
     {
       text: "Which of these is a variable?",
       choices: ["7", "x", "+", "="],
-      correct: 2
+      correct: 2,
+      explain: "A variable, like x, represents an unknown value in an expression or equation."
     },
     {
       text: "Solve for n: 2n = 18",
       choices: ["7", "8", "9", "36"],
-      correct: 3
+      correct: 3,
+      explain: "Dividing both sides of 2n = 18 by 2 gives n = 9."
     },
     {
       text: "Solve for x: x - 4 = 10",
       choices: ["6", "14", "40", "-6"],
-      correct: 2
+      correct: 2,
+      explain: "Adding 4 to both sides of x − 4 = 10 gives x = 14."
     },
     {
       text: "Simplify: 7a - 2a",
       choices: ["5a", "9a", "5", "14a"],
-      correct: 1
+      correct: 1,
+      explain: "7a and 2a are like terms, so subtracting gives 5a."
     },
     {
       text: "If x = 5, what is 2x + 3?",
       choices: ["10", "13", "16", "7"],
-      correct: 2
+      correct: 2,
+      explain: "Substituting x = 5 gives 2(5) + 3, which equals 13."
     },
     {
       text: "Solve for x: 5x = 45",
       choices: ["5", "8", "9", "40"],
-      correct: 3
+      correct: 3,
+      explain: "Dividing both sides of 5x = 45 by 5 gives x = 9."
     },
     {
       text: "Simplify: 4b + 3 + 2b",
       choices: ["6b + 3", "9b", "6b", "5b + 3"],
-      correct: 1
+      correct: 1,
+      explain: "Combining the like terms 4b and 2b gives 6b, leaving 6b + 3."
     },
     {
       text: "What is the coefficient of x in the term 7x?",
       choices: ["1", "7", "x", "0"],
-      correct: 2
+      correct: 2,
+      explain: "In the term 7x, the number 7 multiplying the variable is the coefficient."
     },
     {
       text: "Solve for y: y / 3 = 6",
       choices: ["2", "9", "18", "3"],
-      correct: 3
+      correct: 3,
+      explain: "Multiplying both sides of y/3 = 6 by 3 gives y = 18."
     },
     {
       text: "If a = 2 and b = 3, what is a + 2b?",
       choices: ["7", "8", "10", "5"],
-      correct: 2
+      correct: 2,
+      explain: "Substituting a = 2 and b = 3 gives 2 + 2(3), which equals 8."
     },
     {
       text: "Solve for x: x + 12 = 20",
       choices: ["6", "8", "32", "-8"],
-      correct: 2
+      correct: 2,
+      explain: "Subtracting 12 from both sides of x + 12 = 20 gives x = 8."
     },
     {
       text: "Simplify: 10x - 4x + x",
       choices: ["5x", "6x", "7x", "15x"],
-      correct: 3
+      correct: 3,
+      explain: "Combining 10x − 4x + x gives 7x."
     }
   ],
 
@@ -1469,77 +1695,92 @@ Algebra: {
     {
       text: "Solve for x: 2x − 5 = 11",
       choices: ["3", "6", "8", "13"],
-      correct: 3
+      correct: 3,
+      explain: "Adding 5 to both sides gives 2x = 16, then dividing by 2 gives x = 8."
     },
     {
       text: "Factor: x² − 9",
       choices: ["(x − 3)(x − 3)", "(x + 3)(x + 3)", "(x + 3)(x − 3)", "x(x − 9)"],
-      correct: 3
+      correct: 3,
+      explain: "Factor the difference of squares x² − 9 into (x + 3)(x − 3)."
     },
     {
       text: "What is the slope of the line y = 4x + 2?",
       choices: ["2", "4", "6", "1/4"],
-      correct: 2
+      correct: 2,
+      explain: "In y = mx + b form, the coefficient of x, which is 4, is the slope."
     },
     {
       text: "Expand: (x + 2)(x + 3)",
       choices: ["x² + 5x + 6", "x² + 6x + 5", "x² + 5x + 5", "x² + 6"],
-      correct: 1
+      correct: 1,
+      explain: "Multiplying out (x + 2)(x + 3) gives x² + 5x + 6."
     },
     {
       text: "Solve the system: x + y = 10 and x − y = 4. What is x?",
       choices: ["3", "5", "6", "7"],
-      correct: 4
+      correct: 4,
+      explain: "Adding the two equations eliminates y: 2x = 14, so x = 7."
     },
     {
       text: "Solve for x: 3x + 4 = 19",
       choices: ["3", "5", "7", "15"],
-      correct: 2
+      correct: 2,
+      explain: "Subtracting 4 from both sides gives 3x = 15, then dividing by 3 gives x = 5."
     },
     {
       text: "Simplify: 2(x + 5)",
       choices: ["2x + 5", "2x + 10", "x + 10", "2x + 7"],
-      correct: 2
+      correct: 2,
+      explain: "Distributing the 2 across (x + 5) gives 2x + 10."
     },
     {
       text: "What is the y-intercept of the line y = 2x - 3?",
       choices: ["2", "-3", "3", "0"],
-      correct: 2
+      correct: 2,
+      explain: "In y = mx + b form, the constant term -3 is the y-intercept."
     },
     {
       text: "Factor: x² + 7x + 12",
       choices: ["(x + 3)(x + 4)", "(x + 2)(x + 6)", "(x + 1)(x + 12)", "(x - 3)(x - 4)"],
-      correct: 1
+      correct: 1,
+      explain: "Factor x² + 7x + 12 by finding two numbers that multiply to 12 and add to 7: 3 and 4."
     },
     {
       text: "Solve for x: (x / 2) + 3 = 7",
       choices: ["2", "5", "8", "14"],
-      correct: 3
+      correct: 3,
+      explain: "Subtracting 3 gives x/2 = 4, then multiplying by 2 gives x = 8."
     },
     {
       text: "Simplify: (3x²)(2x³)",
       choices: ["5x⁵", "6x⁵", "6x⁶", "5x⁶"],
-      correct: 2
+      correct: 2,
+      explain: "Multiply coefficients and add exponents of matching bases: 3×2=6, x²·x³=x⁵, giving 6x⁵."
     },
     {
       text: "Evaluate 2x² when x = 3.",
       choices: ["12", "18", "36", "6"],
-      correct: 2
+      correct: 2,
+      explain: "Substituting x = 3 gives 2(3)², which is 2×9, or 18."
     },
     {
       text: "Solve for x: 4x - 3 = 2x + 7",
       choices: ["2", "5", "4", "10"],
-      correct: 2
+      correct: 2,
+      explain: "Subtracting 2x and adding 3 to both sides gives 2x = 10, so x = 5."
     },
     {
       text: "What is the slope of the line through the points (0, 1) and (2, 5)?",
       choices: ["1", "2", "3", "4"],
-      correct: 2
+      correct: 2,
+      explain: "Slope is the change in y over the change in x: (5−1)/(2−0) = 4/2 = 2."
     },
     {
       text: "Expand: (x - 4)(x + 4)",
       choices: ["x² - 16", "x² + 16", "x² - 8x - 16", "x² - 8"],
-      correct: 1
+      correct: 1,
+      explain: "This is a difference of squares, expanding to x² − 16."
     }
   ],
 
@@ -1547,77 +1788,92 @@ Algebra: {
     {
       text: "What are the roots of x² − 5x + 6 = 0?",
       choices: ["2 and 3", "−2 and −3", "1 and 6", "−1 and −6"],
-      correct: 1
+      correct: 1,
+      explain: "Factoring x² − 5x + 6 gives (x − 2)(x − 3), so the roots are 2 and 3."
     },
     {
       text: "In the quadratic formula, what expression is under the square root?",
       choices: ["b² + 4ac", "b² − 4ac", "4ac − b²", "2ab − 4c"],
-      correct: 2
+      correct: 2,
+      explain: "The discriminant in the quadratic formula is b² − 4ac."
     },
     {
       text: "If f(x) = 2x² − 3, what is f(3)?",
       choices: ["9", "12", "15", "18"],
-      correct: 3
+      correct: 3,
+      explain: "Substituting x = 3 gives 2(3)² − 3, which is 18 − 3, or 15."
     },
     {
       text: "What is the vertex of the parabola y = (x − 2)² + 5?",
       choices: ["(−2, 5)", "(2, 5)", "(2, −5)", "(5, 2)"],
-      correct: 2
+      correct: 2,
+      explain: "In vertex form y = (x − h)² + k, the vertex sits at (h, k), here (2, 5)."
     },
     {
       text: "Simplify: (x³ · x⁴) ÷ x²",
       choices: ["x⁵", "x⁹", "x⁶", "x³"],
-      correct: 1
+      correct: 1,
+      explain: "Multiplying x³ and x⁴ gives x⁷, then dividing by x² gives x⁵."
     },
     {
       text: "What are the roots of x² - 9 = 0?",
       choices: ["3 and -3", "9 and -9", "0 and 9", "only 3"],
-      correct: 1
+      correct: 1,
+      explain: "Factoring x² − 9 gives (x − 3)(x + 3), so the roots are 3 and −3."
     },
     {
       text: "Solve the quadratic: x² + x - 6 = 0",
       choices: ["2 and -3", "-2 and 3", "1 and 6", "-1 and -6"],
-      correct: 1
+      correct: 1,
+      explain: "Factor x² + x − 6 into (x + 3)(x − 2), giving roots 2 and −3."
     },
     {
       text: "If f(x) = 3x + 1, what is f(-2)?",
       choices: ["-5", "-7", "7", "5"],
-      correct: 1
+      correct: 1,
+      explain: "Substituting x = -2 gives 3(-2) + 1, which equals -5."
     },
     {
       text: "What is the discriminant (b² - 4ac) of x² - 4x + 4 = 0?",
       choices: ["0", "4", "8", "-16"],
-      correct: 1
+      correct: 1,
+      explain: "With a=1, b=-4, c=4, the discriminant is (-4)² − 4(1)(4), which equals 0."
     },
     {
       text: "Simplify: (2x³y²)³",
       choices: ["6x⁹y⁶", "8x⁹y⁶", "8x⁶y⁵", "6x⁶y⁶"],
-      correct: 2
+      correct: 2,
+      explain: "Cube each factor: 2³=8, (x³)³=x⁹, (y²)³=y⁶, giving 8x⁹y⁶."
     },
     {
       text: "The vertex form y = a(x - h)² + k has its vertex at:",
       choices: ["(h, k)", "(-h, k)", "(h, -k)", "(k, h)"],
-      correct: 1
+      correct: 1,
+      explain: "In vertex form y = a(x − h)² + k, the vertex is located at the point (h, k)."
     },
     {
       text: "Solve for x: 2ˣ = 16",
       choices: ["2", "3", "4", "8"],
-      correct: 3
+      correct: 3,
+      explain: "2⁴ equals 16, so x = 4 solves 2ˣ = 16."
     },
     {
       text: "What is the axis of symmetry of y = x² - 6x + 8?",
       choices: ["x = 3", "x = -3", "x = 6", "x = 8"],
-      correct: 1
+      correct: 1,
+      explain: "The axis of symmetry is x = −b/2a; here that's −(−6)/2, or x = 3."
     },
     {
       text: "Factor completely: 2x² - 8",
       choices: ["2(x² - 4)", "2(x - 2)(x + 2)", "(2x - 4)(x + 2)", "(x - 2)(x + 4)"],
-      correct: 2
+      correct: 2,
+      explain: "Factor out the common factor 2 first, then factor the difference of squares: 2(x − 2)(x + 2)."
     },
     {
       text: "If x² = 49, then x =",
       choices: ["7 only", "-7 only", "±7", "±14"],
-      correct: 3
+      correct: 3,
+      explain: "Taking the square root of both sides of x² = 49 gives x = ±7."
     }
   ]
 }, // Algebra
@@ -1627,77 +1883,92 @@ Geometry: {
     {
       text: "How many degrees are in a right angle?",
       choices: ["45°", "90°", "180°", "360°"],
-      correct: 2
+      correct: 2,
+      explain: "A right angle measures exactly 90 degrees."
     },
     {
       text: "What is the perimeter of a square with side length 6 cm?",
       choices: ["12 cm", "18 cm", "24 cm", "36 cm"],
-      correct: 3
+      correct: 3,
+      explain: "Perimeter of a square is 4 times the side length: 4 × 6 cm = 24 cm."
     },
     {
       text: "What do the interior angles of any triangle add up to?",
       choices: ["90°", "180°", "270°", "360°"],
-      correct: 2
+      correct: 2,
+      explain: "The interior angles of any triangle always add up to 180°."
     },
     {
       text: "What is the area of a rectangle 8 m long and 5 m wide?",
       choices: ["13 m²", "26 m²", "40 m²", "80 m²"],
-      correct: 3
+      correct: 3,
+      explain: "Area of a rectangle is length times width: 8 m × 5 m = 40 m²."
     },
     {
       text: "A triangle with all three sides equal is called:",
       choices: ["Scalene", "Isosceles", "Right", "Equilateral"],
-      correct: 4
+      correct: 4,
+      explain: "An equilateral triangle has all three sides (and angles) equal."
     },
     {
       text: "How many sides does a hexagon have?",
       choices: ["5", "6", "7", "8"],
-      correct: 2
+      correct: 2,
+      explain: "A hexagon has 6 sides."
     },
     {
       text: "What is the perimeter of a rectangle 10 cm long and 4 cm wide?",
       choices: ["14 cm", "28 cm", "40 cm", "20 cm"],
-      correct: 2
+      correct: 2,
+      explain: "Perimeter of a rectangle is 2 times the sum of its length and width: 2(10+4) = 28 cm."
     },
     {
       text: "A closed figure with three sides is a:",
       choices: ["Square", "Triangle", "Circle", "Pentagon"],
-      correct: 2
+      correct: 2,
+      explain: "A triangle is a closed shape formed by three straight sides."
     },
     {
       text: "How many degrees are in a straight angle?",
       choices: ["90°", "180°", "270°", "360°"],
-      correct: 2
+      correct: 2,
+      explain: "A straight angle measures exactly 180 degrees."
     },
     {
       text: "What is the area of a square with side 5 cm?",
       choices: ["10 cm²", "20 cm²", "25 cm²", "50 cm²"],
-      correct: 3
+      correct: 3,
+      explain: "Area of a square is side length squared: 5 cm × 5 cm = 25 cm²."
     },
     {
       text: "A polygon with four equal sides and four right angles is a:",
       choices: ["Rectangle", "Rhombus", "Square", "Trapezoid"],
-      correct: 3
+      correct: 3,
+      explain: "A square has four equal sides and four right angles."
     },
     {
       text: "How many degrees are in a full circle?",
       choices: ["90°", "180°", "270°", "360°"],
-      correct: 4
+      correct: 4,
+      explain: "A full circle measures 360 degrees all the way around."
     },
     {
       text: "What do you call an angle less than 90°?",
       choices: ["Acute", "Obtuse", "Right", "Straight"],
-      correct: 1
+      correct: 1,
+      explain: "An acute angle is any angle measuring less than 90 degrees."
     },
     {
       text: "How many sides does a pentagon have?",
       choices: ["4", "5", "6", "7"],
-      correct: 2
+      correct: 2,
+      explain: "A pentagon has 5 sides."
     },
     {
       text: "The distance around a circle is called its:",
       choices: ["Area", "Radius", "Circumference", "Diameter"],
-      correct: 3
+      correct: 3,
+      explain: "The circumference is the distance measured all the way around a circle."
     }
   ],
 
@@ -1705,77 +1976,92 @@ Geometry: {
     {
       text: "A right triangle has legs 3 and 4. How long is the hypotenuse?",
       choices: ["5", "6", "7", "12"],
-      correct: 1
+      correct: 1,
+      explain: "By the Pythagorean theorem, 3² + 4² = 25, and the square root of 25 is 5."
     },
     {
       text: "What is the sum of the interior angles of a quadrilateral?",
       choices: ["180°", "270°", "360°", "540°"],
-      correct: 3
+      correct: 3,
+      explain: "The interior angles of any quadrilateral always add up to 360°."
     },
     {
       text: "Two angles that add up to 180° are called:",
       choices: ["Complementary", "Supplementary", "Vertical", "Adjacent"],
-      correct: 2
+      correct: 2,
+      explain: "Angles that add up to 180° are called supplementary angles."
     },
     {
       text: "What is the area of a triangle with base 10 cm and height 6 cm?",
       choices: ["16 cm²", "30 cm²", "60 cm²", "36 cm²"],
-      correct: 2
+      correct: 2,
+      explain: "Area of a triangle is one-half base times height: ½ × 10 × 6 = 30 cm²."
     },
     {
       text: "Two triangles with the same shape but different sizes are:",
       choices: ["Congruent", "Similar", "Equal", "Symmetric"],
-      correct: 2
+      correct: 2,
+      explain: "Similar triangles have the same shape and proportional sides but can differ in size."
     },
     {
       text: "An angle greater than 90° but less than 180° is:",
       choices: ["Acute", "Right", "Obtuse", "Straight"],
-      correct: 3
+      correct: 3,
+      explain: "An obtuse angle measures more than 90° but less than 180°."
     },
     {
       text: "Two angles that add up to 90° are called:",
       choices: ["Complementary", "Supplementary", "Vertical", "Adjacent"],
-      correct: 1
+      correct: 1,
+      explain: "Angles that add up to 90° are called complementary angles."
     },
     {
       text: "What is the area of a circle with radius 5? (use π ≈ 3.14)",
       choices: ["15.7", "31.4", "78.5", "25"],
-      correct: 3
+      correct: 3,
+      explain: "Area of a circle is π times radius squared: 3.14 × 5² = 78.5."
     },
     {
       text: "The Pythagorean theorem is written as:",
       choices: ["a + b = c", "a² + b² = c²", "a² - b² = c²", "ab = c²"],
-      correct: 2
+      correct: 2,
+      explain: "The Pythagorean theorem relates a right triangle's legs and hypotenuse as a² + b² = c²."
     },
     {
       text: "A right triangle has legs 6 and 8. The hypotenuse is:",
       choices: ["10", "12", "14", "48"],
-      correct: 1
+      correct: 1,
+      explain: "By the Pythagorean theorem, 6² + 8² = 100, and the square root of 100 is 10."
     },
     {
       text: "How many degrees is each interior angle of an equilateral triangle?",
       choices: ["45°", "60°", "90°", "120°"],
-      correct: 2
+      correct: 2,
+      explain: "Each interior angle of an equilateral triangle measures 180° ÷ 3, or 60°."
     },
     {
       text: "What is the perimeter of a circle called?",
       choices: ["Diameter", "Radius", "Circumference", "Arc"],
-      correct: 3
+      correct: 3,
+      explain: "The perimeter, or distance around, a circle is called its circumference."
     },
     {
       text: "Triangles that are exactly the same shape and size are:",
       choices: ["Similar", "Congruent", "Scalene", "Right"],
-      correct: 2
+      correct: 2,
+      explain: "Congruent triangles are identical in both shape and size."
     },
     {
       text: "The longest side of a right triangle is the:",
       choices: ["Base", "Leg", "Hypotenuse", "Altitude"],
-      correct: 3
+      correct: 3,
+      explain: "The hypotenuse is the longest side of a right triangle, opposite the right angle."
     },
     {
       text: "What is the area of a parallelogram with base 8 and height 5?",
       choices: ["13", "26", "40", "80"],
-      correct: 3
+      correct: 3,
+      explain: "Area of a parallelogram is base times height: 8 × 5 = 40."
     }
   ],
 
@@ -1783,77 +2069,92 @@ Geometry: {
     {
       text: "What is the circumference of a circle with radius 7, using π ≈ 22/7?",
       choices: ["22", "44", "154", "49"],
-      correct: 2
+      correct: 2,
+      explain: "Circumference is 2πr, or 2 × (22/7) × 7, which equals 44."
     },
     {
       text: "An angle inscribed in a semicircle always measures:",
       choices: ["45°", "60°", "90°", "180°"],
-      correct: 3
+      correct: 3,
+      explain: "Any angle inscribed in a semicircle measures exactly 90°, by Thales' theorem."
     },
     {
       text: "What is the volume of a cube with edge length 4 cm?",
       choices: ["16 cm³", "32 cm³", "48 cm³", "64 cm³"],
-      correct: 4
+      correct: 4,
+      explain: "Volume of a cube is the edge length cubed: 4³ = 64 cm³."
     },
     {
       text: "In a right triangle, the ratio of the opposite side to the hypotenuse is called:",
       choices: ["Cosine", "Tangent", "Sine", "Secant"],
-      correct: 3
+      correct: 3,
+      explain: "The ratio of the opposite side to the hypotenuse in a right triangle is the sine."
     },
     {
       text: "The distance from the center of a circle to any point on the circle is the:",
       choices: ["Diameter", "Chord", "Radius", "Arc"],
-      correct: 3
+      correct: 3,
+      explain: "The radius is the distance from a circle's center to any point on its edge."
     },
     {
       text: "What is the area of a circle with radius 7, using π ≈ 22/7?",
       choices: ["22", "44", "154", "49"],
-      correct: 3
+      correct: 3,
+      explain: "Area of a circle is πr², or (22/7) × 7², which equals 154."
     },
     {
       text: "The sum of the interior angles of a pentagon is:",
       choices: ["360°", "450°", "540°", "720°"],
-      correct: 3
+      correct: 3,
+      explain: "The interior angles of a pentagon sum to (5−2) × 180°, or 540°."
     },
     {
       text: "In a right triangle, the ratio of the adjacent side to the hypotenuse is:",
       choices: ["Sine", "Cosine", "Tangent", "Cotangent"],
-      correct: 2
+      correct: 2,
+      explain: "The ratio of the adjacent side to the hypotenuse in a right triangle is the cosine."
     },
     {
       text: "What is the volume of a rectangular box measuring 2 × 3 × 4?",
       choices: ["9", "24", "12", "18"],
-      correct: 2
+      correct: 2,
+      explain: "Volume of a rectangular box is length × width × height: 2 × 3 × 4 = 24."
     },
     {
       text: "The value of sin 30° is:",
       choices: ["0", "0.5", "1", "√3"],
-      correct: 2
+      correct: 2,
+      explain: "Sin 30° equals 0.5, a value derived from the 30-60-90 triangle ratios."
     },
     {
       text: "The surface area of a cube with edge length 3 is:",
       choices: ["9", "27", "54", "18"],
-      correct: 3
+      correct: 3,
+      explain: "Surface area of a cube is 6 times the edge length squared: 6 × 3² = 54."
     },
     {
       text: "A segment through the center of a circle with both endpoints on the circle is the:",
       choices: ["Radius", "Chord", "Diameter", "Tangent"],
-      correct: 3
+      correct: 3,
+      explain: "A diameter passes through the center of a circle with both ends on the circle."
     },
     {
       text: "The measure of each interior angle of a regular hexagon is:",
       choices: ["108°", "120°", "135°", "144°"],
-      correct: 2
+      correct: 2,
+      explain: "Each interior angle of a regular hexagon measures (6−2)×180°/6, or 120°."
     },
     {
       text: "Using the distance formula, the distance between (0, 0) and (3, 4) is:",
       choices: ["5", "7", "12", "25"],
-      correct: 1
+      correct: 1,
+      explain: "By the distance formula, the distance is the square root of (3²+4²), which equals 5."
     },
     {
       text: "The value of tan 45° is:",
       choices: ["0", "0.5", "1", "√2"],
-      correct: 3
+      correct: 3,
+      explain: "Tan 45° equals 1, since the opposite and adjacent sides of a 45° angle are equal."
     }
   ]
 }, // Geometry
@@ -1863,77 +2164,92 @@ Literature: {
     {
       text: "What do we call the sequence of events in a story?",
       choices: ["Theme", "Plot", "Setting", "Mood"],
-      correct: 2
+      correct: 2,
+      explain: "Plot is the sequence of events that make up a story."
     },
     {
       text: "\"Her smile was as bright as the sun\" is an example of:",
       choices: ["Metaphor", "Personification", "Simile", "Hyperbole"],
-      correct: 3
+      correct: 3,
+      explain: "Comparing a smile to the sun using \"as\" makes this a simile."
     },
     {
       text: "The time and place where a story happens is called the:",
       choices: ["Plot", "Conflict", "Setting", "Climax"],
-      correct: 3
+      correct: 3,
+      explain: "Setting refers to the time and place in which a story unfolds."
     },
     {
       text: "Who is the main character of a story called?",
       choices: ["Antagonist", "Narrator", "Protagonist", "Author"],
-      correct: 3
+      correct: 3,
+      explain: "The protagonist is the main character around whom the story revolves."
     },
     {
       text: "A story passed down that explains nature or beliefs, often with gods or heroes, is a:",
       choices: ["Biography", "Myth", "News article", "Essay"],
-      correct: 2
+      correct: 2,
+      explain: "A myth is a traditional story, often involving gods or heroes, that explains natural events or beliefs."
     },
     {
       text: "A comparison using the words \"like\" or \"as\" is a:",
       choices: ["Metaphor", "Simile", "Idiom", "Pun"],
-      correct: 2
+      correct: 2,
+      explain: "A simile compares two things using \"like\" or \"as.\""
     },
     {
       text: "The person who tells the story is the:",
       choices: ["Author", "Narrator", "Character", "Editor"],
-      correct: 2
+      correct: 2,
+      explain: "The narrator is the voice that tells the story to the reader."
     },
     {
       text: "The struggle between opposing forces in a story is the:",
       choices: ["Theme", "Setting", "Conflict", "Mood"],
-      correct: 3
+      correct: 3,
+      explain: "Conflict is the central struggle or problem that drives a story's plot."
     },
     {
       text: "A short story that teaches a moral lesson, often using animals, is a:",
       choices: ["Fable", "Novel", "Essay", "Poem"],
-      correct: 1
+      correct: 1,
+      explain: "A fable is a short tale, often with animal characters, meant to teach a moral lesson."
     },
     {
       text: "Words that imitate sounds, like \"buzz\" or \"bang,\" are examples of:",
       choices: ["Simile", "Metaphor", "Onomatopoeia", "Rhyme"],
-      correct: 3
+      correct: 3,
+      explain: "Onomatopoeia refers to words that imitate the sounds they describe, like \"buzz.\""
     },
     {
       text: "The villain or character who opposes the hero is the:",
       choices: ["Protagonist", "Antagonist", "Narrator", "Author"],
-      correct: 2
+      correct: 2,
+      explain: "The antagonist is the character who opposes or creates conflict for the hero."
     },
     {
       text: "A group of lines in a poem is called a:",
       choices: ["Stanza", "Chapter", "Paragraph", "Sentence"],
-      correct: 1
+      correct: 1,
+      explain: "A stanza is a group of lines forming a unit within a poem."
     },
     {
       text: "\"The stars danced in the sky\" gives the stars human qualities. This is:",
       choices: ["Simile", "Hyperbole", "Personification", "Irony"],
-      correct: 3
+      correct: 3,
+      explain: "Giving stars the human ability to dance is an example of personification."
     },
     {
       text: "The feeling or atmosphere a story creates in the reader is its:",
       choices: ["Plot", "Mood", "Setting", "Theme"],
-      correct: 2
+      correct: 2,
+      explain: "Mood is the emotional atmosphere a piece of writing creates for its reader."
     },
     {
       text: "A long, made-up story written in prose is called a:",
       choices: ["Novel", "Biography", "Report", "Diary"],
-      correct: 1
+      correct: 1,
+      explain: "A novel is a long fictional narrative written in prose."
     }
   ],
 
@@ -1941,77 +2257,92 @@ Literature: {
     {
       text: "\"The wind whispered through the trees\" is an example of:",
       choices: ["Simile", "Personification", "Onomatopoeia", "Irony"],
-      correct: 2
+      correct: 2,
+      explain: "Giving the wind the human ability to whisper is an example of personification."
     },
     {
       text: "What is the turning point or most exciting moment of a story called?",
       choices: ["Exposition", "Rising action", "Climax", "Resolution"],
-      correct: 3
+      correct: 3,
+      explain: "The climax is the most intense, turning-point moment of a story's plot."
     },
     {
       text: "A 14-line poem, often about love, is called a:",
       choices: ["Haiku", "Sonnet", "Ballad", "Limerick"],
-      correct: 2
+      correct: 2,
+      explain: "A sonnet is a 14-line poem, often exploring themes of love."
     },
     {
       text: "Who wrote the play \"Romeo and Juliet\"?",
       choices: ["Charles Dickens", "William Shakespeare", "Mark Twain", "Jane Austen"],
-      correct: 2
+      correct: 2,
+      explain: "William Shakespeare is the playwright who wrote \"Romeo and Juliet.\""
     },
     {
       text: "The central message or lesson of a literary work is its:",
       choices: ["Plot", "Setting", "Theme", "Tone"],
-      correct: 3
+      correct: 3,
+      explain: "Theme is the central message or underlying idea of a literary work."
     },
     {
       text: "An exaggeration for effect, like \"I've told you a million times,\" is:",
       choices: ["Simile", "Hyperbole", "Metaphor", "Irony"],
-      correct: 2
+      correct: 2,
+      explain: "Hyperbole is deliberate exaggeration used for emphasis or effect."
     },
     {
       text: "A comparison that says one thing IS another, without \"like\" or \"as,\" is a:",
       choices: ["Simile", "Metaphor", "Pun", "Idiom"],
-      correct: 2
+      correct: 2,
+      explain: "A metaphor directly states one thing is another, without using \"like\" or \"as.\""
     },
     {
       text: "The introduction that gives background at the start of a story is the:",
       choices: ["Climax", "Exposition", "Resolution", "Falling action"],
-      correct: 2
+      correct: 2,
+      explain: "Exposition is the opening section that establishes background, characters, and setting."
     },
     {
       text: "A reference to another well-known work, person, or event is an:",
       choices: ["Allusion", "Illusion", "Analogy", "Anecdote"],
-      correct: 1
+      correct: 1,
+      explain: "An allusion is a brief reference to another well-known work, person, or event."
     },
     {
       text: "The repetition of beginning consonant sounds in nearby words is:",
       choices: ["Rhyme", "Alliteration", "Assonance", "Meter"],
-      correct: 2
+      correct: 2,
+      explain: "Alliteration is the repetition of initial consonant sounds in nearby words."
     },
     {
       text: "A three-line Japanese poem with a 5-7-5 syllable pattern is a:",
       choices: ["Sonnet", "Haiku", "Limerick", "Ballad"],
-      correct: 2
+      correct: 2,
+      explain: "A haiku is a three-line Japanese poem following a 5-7-5 syllable pattern."
     },
     {
       text: "The part after the climax where conflicts are resolved is the:",
       choices: ["Rising action", "Resolution", "Exposition", "Climax"],
-      correct: 2
+      correct: 2,
+      explain: "The resolution is the part of the story after the climax where the conflict is settled."
     },
     {
       text: "Descriptive language that appeals to the five senses is called:",
       choices: ["Imagery", "Irony", "Symbolism", "Dialogue"],
-      correct: 1
+      correct: 1,
+      explain: "Imagery is descriptive language that appeals to the reader's five senses."
     },
     {
       text: "A conversation between two or more characters in a story is called:",
       choices: ["Monologue", "Dialogue", "Narration", "Soliloquy"],
-      correct: 2
+      correct: 2,
+      explain: "Dialogue is the spoken exchange between two or more characters in a story."
     },
     {
       text: "The attitude a writer takes toward a subject is the work's:",
       choices: ["Tone", "Plot", "Setting", "Rhyme"],
-      correct: 1
+      correct: 1,
+      explain: "Tone reflects the writer's attitude toward the subject or audience."
     }
   ],
 
@@ -2019,77 +2350,92 @@ Literature: {
     {
       text: "When the audience knows something a character does not, this is called:",
       choices: ["Verbal irony", "Situational irony", "Dramatic irony", "Sarcasm"],
-      correct: 3
+      correct: 3,
+      explain: "Dramatic irony occurs when the audience knows something a character does not."
     },
     {
       text: "A long narrative poem about a hero's deeds, like \"The Odyssey,\" is an:",
       choices: ["Elegy", "Epic", "Ode", "Allegory"],
-      correct: 2
+      correct: 2,
+      explain: "An epic is a long narrative poem centered on a hero's grand deeds, like \"The Odyssey.\""
     },
     {
       text: "What is a hint or clue about what will happen later in a story called?",
       choices: ["Flashback", "Foreshadowing", "Symbolism", "Imagery"],
-      correct: 2
+      correct: 2,
+      explain: "Foreshadowing gives readers hints about events that will happen later in the story."
     },
     {
       text: "A story where characters and events represent deeper meanings or ideas is an:",
       choices: ["Autobiography", "Anthology", "Allegory", "Anecdote"],
-      correct: 3
+      correct: 3,
+      explain: "An allegory uses characters and events to symbolize deeper meanings or ideas."
     },
     {
       text: "The narrator who uses \"I\" and takes part in the story is written in:",
       choices: ["First person", "Second person", "Third person limited", "Third person omniscient"],
-      correct: 1
+      correct: 1,
+      explain: "First-person narration uses \"I\" and comes from a narrator who participates in the story."
     },
     {
       text: "A contrast between what is expected and what actually happens is:",
       choices: ["Situational irony", "Verbal irony", "Dramatic irony", "Foreshadowing"],
-      correct: 1
+      correct: 1,
+      explain: "Situational irony is a contrast between what is expected to happen and what actually happens."
     },
     {
       text: "When a character says the opposite of what they truly mean, it is:",
       choices: ["Situational irony", "Verbal irony", "Dramatic irony", "Imagery"],
-      correct: 2
+      correct: 2,
+      explain: "Verbal irony occurs when someone says the opposite of what they truly mean."
     },
     {
       text: "An object that stands for a larger idea is an example of:",
       choices: ["Imagery", "Symbolism", "Alliteration", "Meter"],
-      correct: 2
+      correct: 2,
+      explain: "Symbolism is using an object to represent a larger idea or concept."
     },
     {
       text: "A long speech by one character alone on stage, revealing their thoughts, is a:",
       choices: ["Dialogue", "Monologue", "Soliloquy", "Aside"],
-      correct: 3
+      correct: 3,
+      explain: "A soliloquy is a speech a character delivers alone on stage, revealing inner thoughts."
     },
     {
       text: "The narrator who knows the thoughts of all characters is:",
       choices: ["First person", "Third person limited", "Third person omniscient", "Second person"],
-      correct: 3
+      correct: 3,
+      explain: "A third-person omniscient narrator knows and can reveal the thoughts of every character."
     },
     {
       text: "A recurring idea, image, or symbol that develops a theme is a:",
       choices: ["Motif", "Plot", "Setting", "Climax"],
-      correct: 1
+      correct: 1,
+      explain: "A motif is a recurring image, idea, or symbol that reinforces a work's theme."
     },
     {
       text: "The emotional release an audience feels at the end of a tragedy is called:",
       choices: ["Catharsis", "Climax", "Denouement", "Hubris"],
-      correct: 1
+      correct: 1,
+      explain: "Catharsis is the emotional release an audience experiences at a tragedy's end."
     },
     {
       text: "In a tragedy, the hero's excessive pride that leads to their downfall is called:",
       choices: ["Hubris", "Catharsis", "Irony", "Motif"],
-      correct: 1
+      correct: 1,
+      explain: "Hubris is the excessive pride that leads a tragic hero to their downfall."
     },
     {
       text: "A character who contrasts with another to highlight certain qualities is a:",
       choices: ["Foil", "Protagonist", "Narrator", "Antagonist"],
-      correct: 1
+      correct: 1,
+      explain: "A foil is a character whose contrasting traits highlight qualities in another character."
     },
     {
       text: "The overall structure or sequence of events in a narrative is the:",
       choices: ["Plot", "Tone", "Diction", "Rhyme"],
-      correct: 1
+      correct: 1,
+      explain: "Plot refers to the overall sequence and structure of events in a narrative."
     }
   ]
 }, // Literature
@@ -2099,77 +2445,92 @@ Grammar: {
     {
       text: "Which word is a noun in this sentence: \"The dog barked loudly\"?",
       choices: ["barked", "loudly", "dog", "the"],
-      correct: 3
+      correct: 3,
+      explain: "\"Dog\" is the noun in the sentence, naming the thing that barked."
     },
     {
       text: "Choose the correct verb: \"She ___ to school every day.\"",
       choices: ["go", "goes", "going", "gone"],
-      correct: 2
+      correct: 2,
+      explain: "With a singular subject like \"she,\" the verb takes the -s form, \"goes.\""
     },
     {
       text: "Which word is an adjective: \"The tall tree swayed gently\"?",
       choices: ["tree", "swayed", "gently", "tall"],
-      correct: 4
+      correct: 4,
+      explain: "\"Tall\" describes the noun \"tree,\" making it the adjective."
     },
     {
       text: "What punctuation mark ends a question?",
       choices: ["Period", "Comma", "Question mark", "Exclamation point"],
-      correct: 3
+      correct: 3,
+      explain: "A question mark is the punctuation used to end a question."
     },
     {
       text: "Which pronoun replaces \"Maria\" in a sentence?",
       choices: ["He", "She", "It", "They"],
-      correct: 2
+      correct: 2,
+      explain: "\"She\" is the singular pronoun that can replace the name \"Maria.\""
     },
     {
       text: "Which word is a verb: \"The bird sings sweetly\"?",
       choices: ["bird", "sings", "sweetly", "the"],
-      correct: 2
+      correct: 2,
+      explain: "\"Sings\" is the action word in the sentence, making it the verb."
     },
     {
       text: "What is the plural of \"child\"?",
       choices: ["childs", "children", "childes", "child"],
-      correct: 2
+      correct: 2,
+      explain: "\"Children\" is the irregular plural form of \"child.\""
     },
     {
       text: "Which of these is a proper noun?",
       choices: ["city", "river", "Manila", "mountain"],
-      correct: 3
+      correct: 3,
+      explain: "\"Manila\" names a specific place, making it a proper noun that's capitalized."
     },
     {
       text: "Choose the correct article: \"___ apple a day keeps the doctor away.\"",
       choices: ["A", "An", "The", "No article"],
-      correct: 2
+      correct: 2,
+      explain: "\"An\" is used before words starting with a vowel sound, like \"apple.\""
     },
     {
       text: "Which word is a conjunction: \"I like tea and coffee\"?",
       choices: ["like", "tea", "and", "coffee"],
-      correct: 3
+      correct: 3,
+      explain: "\"And\" joins the two nouns \"tea\" and \"coffee,\" making it a conjunction."
     },
     {
       text: "What punctuation mark ends an exclamatory sentence?",
       choices: ["Period", "Question mark", "Exclamation point", "Comma"],
-      correct: 3
+      correct: 3,
+      explain: "An exclamation point ends a sentence expressing strong emotion."
     },
     {
       text: "Choose the correct pronoun: \"___ are going to the park.\" (a group)",
       choices: ["I", "He", "They", "She"],
-      correct: 3
+      correct: 3,
+      explain: "\"They\" is the plural pronoun used to refer to a group."
     },
     {
       text: "Which word is an adverb: \"She sings beautifully\"?",
       choices: ["She", "sings", "beautifully", "song"],
-      correct: 3
+      correct: 3,
+      explain: "\"Beautifully\" describes how she sings, making it an adverb."
     },
     {
       text: "The plural of \"box\" is:",
       choices: ["boxs", "boxes", "boxen", "box"],
-      correct: 2
+      correct: 2,
+      explain: "\"Boxes\" is the plural form of \"box,\" formed by adding -es after the x."
     },
     {
       text: "Which sentence is correct?",
       choices: ["He don't like it.", "He doesn't like it.", "He not like it.", "He no like it."],
-      correct: 2
+      correct: 2,
+      explain: "\"He doesn't like it\" correctly pairs the singular subject with \"doesn't.\""
     }
   ],
 
@@ -2177,77 +2538,92 @@ Grammar: {
     {
       text: "Choose the correct form: \"Neither of the boys ___ finished the test.\"",
       choices: ["have", "has", "were", "are"],
-      correct: 2
+      correct: 2,
+      explain: "With \"neither\" treated as singular, the verb \"has\" agrees correctly."
     },
     {
       text: "What is the past tense of \"write\"?",
       choices: ["writed", "wrote", "written", "writing"],
-      correct: 2
+      correct: 2,
+      explain: "\"Wrote\" is the irregular past tense form of \"write.\""
     },
     {
       text: "Which sentence is in the future tense?",
       choices: ["I ate lunch.", "I am eating lunch.", "I will eat lunch.", "I eat lunch."],
-      correct: 3
+      correct: 3,
+      explain: "\"Will eat\" signals an action that hasn't happened yet, marking the future tense."
     },
     {
       text: "A group of words with a subject and a verb that expresses a complete thought is a:",
       choices: ["Phrase", "Clause", "Sentence", "Fragment"],
-      correct: 3
+      correct: 3,
+      explain: "A clause with both a subject and verb that forms a complete thought is a sentence."
     },
     {
       text: "Which word is an adverb: \"He ran quickly to the store\"?",
       choices: ["ran", "quickly", "store", "he"],
-      correct: 2
+      correct: 2,
+      explain: "\"Quickly\" describes how he ran, making it an adverb."
     },
     {
       text: "What is the past tense of \"go\"?",
       choices: ["goed", "went", "gone", "going"],
-      correct: 2
+      correct: 2,
+      explain: "\"Went\" is the irregular past tense form of \"go.\""
     },
     {
       text: "Choose the correct word: \"She is taller ___ her brother.\"",
       choices: ["then", "than", "that", "them"],
-      correct: 2
+      correct: 2,
+      explain: "\"Than\" is used to compare two things, as in \"taller than.\""
     },
     {
       text: "Which sentence is grammatically correct?",
       choices: ["Me and him went.", "He and I went.", "Him and me went.", "I and him went."],
-      correct: 2
+      correct: 2,
+      explain: "\"He and I went\" uses correct subject pronouns for a compound subject."
     },
     {
       text: "Identify the subject: \"The tall boy ran home.\"",
       choices: ["The", "tall", "boy", "ran"],
-      correct: 3
+      correct: 3,
+      explain: "\"Boy\" is who the sentence is about, making it the subject."
     },
     {
       text: "Which word is a preposition: \"The cat sat under the table\"?",
       choices: ["cat", "sat", "under", "table"],
-      correct: 3
+      correct: 3,
+      explain: "\"Under\" shows the relationship between \"cat\" and \"table,\" making it a preposition."
     },
     {
       text: "The past participle of \"eat\" is:",
       choices: ["ate", "eaten", "eating", "eats"],
-      correct: 2
+      correct: 2,
+      explain: "\"Eaten\" is the past participle form used with helping verbs like \"has.\""
     },
     {
       text: "Choose the correct verb: \"The children ___ playing.\"",
       choices: ["is", "was", "are", "has"],
-      correct: 3
+      correct: 3,
+      explain: "\"Children\" is plural, so it takes the plural verb \"are.\""
     },
     {
       text: "What part of speech is the word \"quickly\"?",
       choices: ["Noun", "Verb", "Adjective", "Adverb"],
-      correct: 4
+      correct: 4,
+      explain: "\"Quickly\" modifies how something is done, making it an adverb."
     },
     {
       text: "Choose the correct possessive: \"That is ___ book.\" (belonging to it)",
       choices: ["its", "it's", "its'", "it"],
-      correct: 1
+      correct: 1,
+      explain: "\"Its\" (no apostrophe) shows possession, unlike \"it's,\" which means \"it is.\""
     },
     {
       text: "Choose the correct form: \"I have ___ my homework.\"",
       choices: ["did", "do", "done", "doing"],
-      correct: 3
+      correct: 3,
+      explain: "\"Done\" is the correct past participle to pair with the helping verb \"have.\""
     }
   ],
 
@@ -2260,12 +2636,14 @@ Grammar: {
         "The chef is cooking the meal.",
         "The chef will cook the meal."
       ],
-      correct: 2
+      correct: 2,
+      explain: "In \"The meal was cooked by the chef,\" the subject receives the action, marking passive voice."
     },
     {
       text: "Choose the correct conditional: \"If I ___ rich, I would travel the world.\"",
       choices: ["am", "was", "were", "be"],
-      correct: 3
+      correct: 3,
+      explain: "Hypothetical \"if\" clauses use \"were\" for all subjects in the subjunctive mood."
     },
     {
       text: "Which sentence uses a semicolon correctly?",
@@ -2275,7 +2653,8 @@ Grammar: {
         "Although; it was late.",
         "She bought; apples, and bread."
       ],
-      correct: 2
+      correct: 2,
+      explain: "A semicolon can join two related independent clauses, as in \"It was raining; we stayed inside.\""
     },
     {
       text: "Identify the dependent clause: \"Although it was raining, we played outside.\"",
@@ -2285,27 +2664,32 @@ Grammar: {
         "it was raining",
         "played outside"
       ],
-      correct: 2
+      correct: 2,
+      explain: "\"Although it was raining\" cannot stand alone, making it the dependent clause."
     },
     {
       text: "What is the correct plural of \"analysis\"?",
       choices: ["analysises", "analysis", "analyses", "analysi"],
-      correct: 3
+      correct: 3,
+      explain: "\"Analyses\" is the irregular plural form of \"analysis.\""
     },
     {
       text: "Which sentence has correct subject-verb agreement?",
       choices: ["The team are winning.", "The team is winning.", "The team be winning.", "The team am winning."],
-      correct: 2
+      correct: 2,
+      explain: "\"Team\" is a singular collective noun here, so it takes the singular verb \"is.\""
     },
     {
       text: "Which of these is a conjunctive adverb?",
       choices: ["and", "however", "but", "or"],
-      correct: 2
+      correct: 2,
+      explain: "\"However\" connects ideas between clauses, making it a conjunctive adverb."
     },
     {
       text: "\"Running down the street, the bus was missed by John.\" This contains a:",
       choices: ["Split infinitive", "Dangling modifier", "Comma splice", "Run-on sentence"],
-      correct: 2
+      correct: 2,
+      explain: "The modifier \"Running down the street\" has nothing logical to describe, creating a dangling modifier."
     },
     {
       text: "Choose the correctly written sentence:",
@@ -2315,37 +2699,44 @@ Grammar: {
         "There going to their house over their.",
         "Their going to their house over there."
       ],
-      correct: 2
+      correct: 2,
+      explain: "\"They're going to their house over there\" correctly uses each homophone."
     },
     {
       text: "Which sentence contains a comma splice?",
       choices: ["I came; I saw.", "I came, I saw, I conquered.", "I came and I saw.", "I came. I saw."],
-      correct: 2
+      correct: 2,
+      explain: "\"I came, I saw, I conquered\" incorrectly joins three independent clauses with only commas."
     },
     {
       text: "An independent clause is one that:",
       choices: ["cannot stand alone", "can stand alone as a sentence", "has no verb", "is always a question"],
-      correct: 2
+      correct: 2,
+      explain: "An independent clause expresses a complete thought and can stand alone as a sentence."
     },
     {
       text: "Choose the correct word: \"The committee will announce ___ decision.\"",
       choices: ["it's", "its", "their", "its'"],
-      correct: 2
+      correct: 2,
+      explain: "\"Its\" (no apostrophe) is the possessive form needed before \"decision.\""
     },
     {
       text: "Which word is the gerund in \"Swimming is fun\"?",
       choices: ["is", "fun", "Swimming", "none"],
-      correct: 3
+      correct: 3,
+      explain: "\"Swimming\" acts as a noun here, an -ing form known as a gerund."
     },
     {
       text: "What is the superlative form of \"good\"?",
       choices: ["gooder", "goodest", "better", "best"],
-      correct: 4
+      correct: 4,
+      explain: "\"Best\" is the superlative form of \"good,\" used to compare three or more things."
     },
     {
       text: "Which word is a subordinating conjunction?",
       choices: ["and", "but", "because", "or"],
-      correct: 3
+      correct: 3,
+      explain: "\"Because\" introduces a dependent clause explaining a reason, making it a subordinating conjunction."
     }
   ]
 } // Grammar
@@ -2461,6 +2852,15 @@ function questionsForLevel(level) {
   return out;
 }
 
+// A wrong answer doesn't let the player past — it swaps in a different
+// question from the same topic pool so the same obstacle can be retried
+// with fresh content instead of repeating the one just missed.
+function pickReplacementQuestion(exclude) {
+  const pool = (activeQuestions || []).filter(q => q.text !== exclude.text);
+  if (!pool.length) return exclude;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
 // Live Gemini generation is disabled for now: the Generative Language API
 // only supports API-key auth (not viable client-side on this account) and
 // the OAuth-compatible alternative, Vertex AI, needs billing enabled — not
@@ -2529,7 +2929,7 @@ pipeImg.src = "pipe-green.png";
 const player = {
   x:120, y:100, w:48, h:72,
   vx:0, vy:0,
-  speed:5,
+  speed:3.5,
   onGround:false,
   spawnX:120,
   spawnY:100
@@ -2571,8 +2971,11 @@ let walls=[], gates=[], mazeExit=null;
 let mazeW=0, mazeH=0;
 
 // Flappy (level 3)
-let pipes=[], flappyFinish=null, flappyHold=null, flappyCooldown=0, flapLatch=false;
-const FLAPPY_GRAVITY=0.45, FLAPPY_IMPULSE=-8.5, FLAPPY_SCROLL=3;
+let pipes=[], flappyGates=[], flappyFinish=null, flappyHold=null, flappyCooldown=0, flapLatch=false;
+// Slowed and floatied per playtest feedback: less gravity/impulse makes the
+// flap response easier to control, and a slower scroll gives more reaction
+// time to line up with the pipe gaps (widened to 280px).
+const FLAPPY_GRAVITY=0.22, FLAPPY_IMPULSE=-6, FLAPPY_SCROLL=1.5;
 
 function rectsOverlap(a,b){
   return a.x < b.x + b.w && a.x + a.w > b.x &&
@@ -2588,7 +2991,7 @@ function buildCurrentLevel(){
   levelFinished = false;
   platforms=[]; spikes=[]; questions=[];
   walls=[]; gates=[]; mazeExit=null;
-  pipes=[]; flappyFinish=null; flappyHold=null; flappyCooldown=0;
+  pipes=[]; flappyGates=[]; flappyFinish=null; flappyHold=null; flappyCooldown=0;
   finishLine=null; cameraX=0; cameraY=0;
 
   if (activeQuestions && activeQuestions.length >= 5) {
@@ -2691,6 +3094,13 @@ const MAZE_LAYOUTS = [
 let mazeLayoutIndex = 0;
 const MAZE_TILE = 80;
 
+// Level 3 backdrop photos, cycling the same way PLATFORMER_BACKGROUNDS does.
+const FLAPPY_BACKGROUNDS = [
+  "FLAPPYBIRDBG.png",
+  "GAMIFIEDJACQUESPIXELATED.png"
+];
+let flappyBgIndex = 0;
+
 // Level 2 backdrop photos, cycling the same way PLATFORMER_BACKGROUNDS does.
 const MAZE_BACKGROUNDS = [
   "GAMIFIEDCONVENTPIXELATED (1).png",
@@ -2738,22 +3148,31 @@ function buildMazeLevel(){
 
 function buildFlappyLevel(){
   document.body.dataset.mode = "flappy";
-  setLevelBackground();
+  document.body.style.backgroundImage =
+    `url('${FLAPPY_BACKGROUNDS[flappyBgIndex % FLAPPY_BACKGROUNDS.length]}')`;
+  flappyBgIndex++;
 
   const groundY = canvas.height - 60;
   // Easier tuning: wider gaps and more space between pipes.
-  const gapH = 220, pipeW = 70, spacing = 480;
+  const gapH = 280, pipeW = 70, spacing = 480;
   const flappyQs = questionsForLevel(3);
   let qi = 0;
   for(let i=0;i<10;i++){
-    const isQ = (i+1) % 3 === 0 && flappyQs.length > 0;
     const gapY = 90 + Math.random() * Math.max(80, groundY - gapH - 180);
-    pipes.push({
-      x: canvas.width + 200 + i*spacing,
-      w: pipeW, gapY, gapH,
-      question: isQ ? flappyQs[qi++ % flappyQs.length] : null,
-      barrier: isQ
-    });
+    const pipeX = canvas.width + 200 + i*spacing;
+    pipes.push({ x: pipeX, w: pipeW, gapY, gapH });
+
+    // Every 3rd pipe gets a question — but the lucky block now stands as its
+    // own full-height gate well before the pipe, not blocking part of the
+    // pipe's own gap. The pipe itself is always a normal, passable obstacle.
+    const isQ = (i+1) % 3 === 0 && flappyQs.length > 0;
+    if(isQ){
+      flappyGates.push({
+        x: pipeX - 220, w: 60,
+        open: false,
+        question: flappyQs[qi++ % flappyQs.length]
+      });
+    }
   }
   flappyFinish = { x: canvas.width + 200 + 10*spacing + 150, w: 20 };
 
@@ -2882,7 +3301,8 @@ function updatePlatformer(){
     }
   });
 
-  // QUESTIONS
+  // QUESTIONS — a correct answer retires the block; a wrong one swaps in a
+  // different question and leaves the block active so it can be retried.
 questions.forEach(q=>{
   if(
     !q.used &&
@@ -2891,8 +3311,10 @@ questions.forEach(q=>{
     player.y < q.y + q.h &&
     player.y + player.h > q.y
   ){
-    q.used = true;        // ✅ IMPORTANT (mark immediately so it can't re-trigger)
-    askQuestion(q);
+    askQuestion(q, correct => {
+      if (correct) q.used = true;
+      else q.data = pickReplacementQuestion(q.data);
+    });
   }
 });
 
@@ -2935,7 +3357,7 @@ function updateMaze(){
     if(rectsOverlap(near, g)){
       askQuestion({data: g.data}, correct=>{
         if(correct) g.open = true;
-        else g.cooldown = 40;
+        else { g.cooldown = 40; g.data = pickReplacementQuestion(g.data); }
       });
     }
   });
@@ -2957,13 +3379,13 @@ function updateMaze(){
 function updateFlappy(){
   const groundY = canvas.height - 60;
 
-  // A question pipe freezes the world until it's answered correctly.
+  // A question gate freezes the world until it's answered correctly.
   if(flappyHold){
     if(flappyCooldown > 0){ flappyCooldown--; return; }
-    const p = flappyHold;
-    askQuestion({data: p.question}, correct=>{
-      if(correct){ p.barrier = false; flappyHold = null; }
-      else flappyCooldown = 45; // brief pause, then the question re-asks
+    const g = flappyHold;
+    askQuestion({data: g.question}, correct=>{
+      if(correct){ g.open = true; flappyHold = null; }
+      else { flappyCooldown = 45; g.question = pickReplacementQuestion(g.question); } // brief pause, then a different question re-asks
     });
     return;
   }
@@ -2978,21 +3400,33 @@ function updateFlappy(){
 
   // Scroll the world left.
   pipes.forEach(p => p.x -= FLAPPY_SCROLL);
+  flappyGates.forEach(g => g.x -= FLAPPY_SCROLL);
   flappyFinish.x -= FLAPPY_SCROLL;
 
-  // An approaching unanswered question pipe grabs the hold.
-  const next = pipes.find(p =>
-    p.barrier && p.x + p.w > player.x && p.x - (player.x + player.w) < 150
+  // The character sprite has a fair amount of transparent padding around the
+  // actual silhouette, so testing collision against the full player.w x
+  // player.h box felt unfairly large — it "died"/triggered before the visible
+  // sprite touched anything. Inset the collision box to match what's on screen.
+  const hbX = player.x + player.w * 0.18;
+  const hbW = player.w * 0.64;
+  const hbY = player.y + player.h * 0.15;
+  const hbH = player.h * 0.8;
+
+  // An unopened question gate freezes the world once the player reaches it —
+  // it stands well before its pipe, not blocking part of the pipe's own gap.
+  const nextGate = flappyGates.find(g =>
+    !g.open && hbX + hbW > g.x && hbX < g.x + g.w
   );
-  if(next){ flappyHold = next; flappyCooldown = 0; return; }
+  if(nextGate){ flappyHold = nextGate; flappyCooldown = 0; return; }
 
   // Ceiling and floor are soft: the player rests against them instead of dying,
   // so touching the ground is safe now — only hitting a pipe ends the run.
   if(player.y < 0){ player.y = 0; player.vy = 0; }
   if(player.y + player.h > groundY){ player.y = groundY - player.h; player.vy = 0; }
+
   for(const p of pipes){
-    const inX = player.x + player.w > p.x && player.x < p.x + p.w;
-    if(inX && (player.y < p.gapY || player.y + player.h > p.gapY + p.gapH)){
+    const inX = hbX + hbW > p.x && hbX < p.x + p.w;
+    if(inX && (hbY < p.gapY || hbY + hbH > p.gapY + p.gapH)){
       buildCurrentLevel();
       return;
     }
@@ -3118,13 +3552,18 @@ function drawMaze(){
   });
 
   // Exit — a green pipe teleporter, same collision box as before but drawn
-  // taller than the tile so it visibly rises out of the floor.
+  // longer than the tile so it visibly juts out — laid on its side (rather
+  // than standing upright like Level 1's finish pipe) to fit the top-down view.
   if(mazeExit){
     if(pipeImg.complete && pipeImg.naturalWidth > 0){
-      const pipeW = 70, pipeH = 145;
-      const tileBottom = mazeExit.y + mazeExit.h + 10;
+      const pipeLen = 145, pipeThick = 70;
       const tileCenterX = mazeExit.x - 10 + MAZE_TILE/2;
-      ctx.drawImage(pipeImg, tileCenterX - pipeW/2, tileBottom - pipeH, pipeW, pipeH);
+      const tileCenterY = mazeExit.y - 10 + MAZE_TILE/2;
+      ctx.save();
+      ctx.translate(tileCenterX, tileCenterY);
+      ctx.rotate(-Math.PI / 2);
+      ctx.drawImage(pipeImg, -pipeThick/2, -pipeLen/2, pipeThick, pipeLen);
+      ctx.restore();
     } else {
       ctx.fillStyle = "#4caf50";
       ctx.fillRect(mazeExit.x, mazeExit.y, mazeExit.w, mazeExit.h);
@@ -3142,28 +3581,47 @@ function drawMaze(){
 function drawFlappy(){
   const groundY = canvas.height - 60;
 
-  // Pipes — flat placeholder rects; art drop-in later is render-only.
+  // Pipes — the same green pipe sprite used elsewhere, stretched to fit each
+  // segment. The top pipe is flipped vertically so its rim faces down into
+  // the gap; the bottom pipe keeps its natural rim-up orientation.
   pipes.forEach(p=>{
-    ctx.fillStyle = "#2e7d32";
-    ctx.fillRect(p.x, 0, p.w, p.gapY);
-    ctx.fillRect(p.x, p.gapY + p.gapH, p.w, groundY - (p.gapY + p.gapH));
-    ctx.strokeStyle = "#1b4d1e";
-    ctx.strokeRect(p.x, 0, p.w, p.gapY);
-    ctx.strokeRect(p.x, p.gapY + p.gapH, p.w, groundY - (p.gapY + p.gapH));
+    const botH = groundY - (p.gapY + p.gapH);
+    if(pipeImg.complete && pipeImg.naturalWidth > 0){
+      ctx.save();
+      ctx.translate(p.x, p.gapY);
+      ctx.scale(1, -1);
+      ctx.drawImage(pipeImg, 0, 0, p.w, p.gapY);
+      ctx.restore();
+      ctx.drawImage(pipeImg, p.x, p.gapY + p.gapH, p.w, botH);
+    } else {
+      ctx.fillStyle = "#2e7d32";
+      ctx.fillRect(p.x, 0, p.w, p.gapY);
+      ctx.fillRect(p.x, p.gapY + p.gapH, p.w, botH);
+      ctx.strokeStyle = "#1b4d1e";
+      ctx.strokeRect(p.x, 0, p.w, p.gapY);
+      ctx.strokeRect(p.x, p.gapY + p.gapH, p.w, botH);
+    }
+  });
 
-    // Unanswered question pipes block the gap with a lucky block.
-    if(p.barrier){
-      const bSize = p.w;
-      const bY = p.gapY + (p.gapH - bSize) / 2;
-      if(!drawLuckyBlock(p.x, bY, bSize, bSize)){
-        ctx.fillStyle = "rgba(255,215,0,.75)";
-        ctx.fillRect(p.x, p.gapY, p.w, p.gapH);
-        ctx.fillStyle = "#000";
-        ctx.font = "bold 40px Arial";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText("?", p.x + p.w/2, p.gapY + p.gapH/2);
-      }
+  // Question gates — a full-height wall standing before its pipe, blocking
+  // the path entirely until answered (rather than sitting inside the pipe's
+  // own gap). Once answered it opens and stops drawing/colliding entirely.
+  flappyGates.forEach(g=>{
+    if(g.open) return;
+    ctx.fillStyle = "rgba(75,0,16,.85)";
+    ctx.fillRect(g.x, 0, g.w, groundY);
+    ctx.strokeStyle = "#FFD700";
+    ctx.strokeRect(g.x, 0, g.w, groundY);
+    const bSize = g.w;
+    const bY = groundY/2 - bSize/2;
+    if(!drawLuckyBlock(g.x, bY, bSize, bSize)){
+      ctx.fillStyle = "rgba(255,215,0,.75)";
+      ctx.fillRect(g.x, bY, bSize, bSize);
+      ctx.fillStyle = "#000";
+      ctx.font = "bold 40px Arial";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("?", g.x + bSize/2, bY + bSize/2);
     }
   });
 
@@ -3181,6 +3639,29 @@ function drawFlappy(){
 }
 
 // ================= ANSWER UI =================
+// A brief 3-2-1 beat shown after Continue, before gameplay resumes, so the
+// player isn't dropped straight back into physics (mid-jump/mid-flap) the
+// instant they finish reading the explanation.
+const countdownOverlay = document.getElementById("countdownOverlay");
+const countdownNumber = document.getElementById("countdownNumber");
+function showCountdown(done){
+  let n = 3;
+  countdownNumber.textContent = n;
+  countdownOverlay.style.display = "flex";
+  const tick = () => {
+    n--;
+    if (n > 0) {
+      countdownNumber.textContent = n;
+      setTimeout(tick, 700);
+    } else {
+      countdownOverlay.style.display = "none";
+      clearKeys(); // don't let input held during the countdown carry over
+      done();
+    }
+  };
+  setTimeout(tick, 700);
+}
+
 // onResult (optional) is called with true/false after the modal closes —
 // maze gates and flappy question pipes use it to open (or stay shut).
 function askQuestion(q, onResult){
@@ -3191,6 +3672,9 @@ function askQuestion(q, onResult){
   const quizChoices = document.getElementById("quizChoices");
   const quizFeedback = document.getElementById("quizFeedback");
   const quizSourceBadge = document.getElementById("quizSourceBadge");
+  const quizExplain = document.getElementById("quizExplain");
+  const quizExplainText = document.getElementById("quizExplainText");
+  const quizContinueBtn = document.getElementById("quizContinueBtn");
 
   // questionsSource is always "fallback" now (live Gemini calls are disabled,
   // see loadQuestions()), but the offline bank's 240 questions were written
@@ -3202,6 +3686,8 @@ function askQuestion(q, onResult){
   quizText.textContent = q.data.text;
   quizFeedback.textContent = "";
   quizChoices.innerHTML = "";
+  quizExplain.style.display = "none";
+  quizContinueBtn.style.display = "none";
 
   q.data.choices.forEach((choice, i) => {
     const btn = document.createElement("button");
@@ -3221,11 +3707,21 @@ function askQuestion(q, onResult){
         quizFeedback.textContent = t("quiz_wrong_feedback");
       }
 
-      setTimeout(() => {
+      // Domie explains the answer (right or wrong); the player reads it on
+      // their own time and taps Continue instead of the modal auto-closing.
+      quizExplainText.textContent = q.data.explain || "";
+      quizExplain.style.display = "flex";
+      quizContinueBtn.style.display = "block";
+      quizContinueBtn.onclick = () => {
         quizModal.style.display = "none";
-        isAsking = false;
-        if (onResult) onResult(isCorrect);
-      }, 1200);
+        // isAsking stays true through the countdown so physics/scrolling
+        // stay frozen — gives the player a beat to get their bearings
+        // before the level resumes.
+        showCountdown(() => {
+          isAsking = false;
+          if (onResult) onResult(isCorrect);
+        });
+      };
     };
     quizChoices.appendChild(btn);
   });
