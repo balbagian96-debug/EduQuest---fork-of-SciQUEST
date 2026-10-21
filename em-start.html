@@ -1,0 +1,2145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>EM Waves Quest</title>
+
+<style>
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  font-family: Arial, sans-serif;
+}
+
+body {
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+
+canvas {
+  display: block;
+  width: 100vw;
+  height: 100vh;
+}
+
+#hud {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  padding: 8px 12px;
+  background: linear-gradient(160deg, rgba(20,20,20,.85), rgba(0,0,0,.7));
+  color: #FFD700;
+  border: 2px solid #FFD700;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,.35);
+  text-shadow: 2px 2px 0 #000;
+  font-weight: bold;
+}
+
+.overlay-base {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,.7);
+}
+
+.card {
+  background: rgba(10, 0, 4, 0.72);
+  backdrop-filter: blur(6px);
+  border: 3px solid #FFD700;
+  padding: 24px;
+  border-radius: 18px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  text-align: center;
+  max-width: 480px;
+  color: #fff;
+}
+
+.card button {
+  margin: 10px;
+  padding: 10px 16px;
+  font-weight: bold;
+  border-radius: 14px;
+  border: 3px solid #FFD700;
+  background: linear-gradient(160deg, #ffe14d, #FFD700);
+  color: #4b0010;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+  transition: transform 0.22s cubic-bezier(.34,1.56,.64,1), box-shadow 0.22s ease;
+}
+
+.card button:hover {
+  transform: scale(1.06);
+  box-shadow: 0 0 18px rgba(255, 215, 0, 0.55), 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+#quizChoices {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+#quizChoices button {
+  margin: 0;
+  padding: 10px 16px;
+  font-weight: bold;
+  border-radius: 14px;
+  border: 3px solid #FFD700;
+  background: linear-gradient(160deg, #ffe14d, #FFD700);
+  color: #4b0010;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+  transition: transform 0.22s cubic-bezier(.34,1.56,.64,1), box-shadow 0.22s ease;
+}
+
+#quizChoices button:hover:not(:disabled) {
+  transform: scale(1.06);
+  box-shadow: 0 0 18px rgba(255, 215, 0, 0.55), 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+#quizChoices button:disabled {
+  cursor: default;
+}
+
+#quizFeedback {
+  min-height: 20px;
+  font-weight: bold;
+}
+
+#quizSourceBadge {
+  display: inline-block;
+  margin-bottom: 10px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-family: 'Press Start 2P', cursive;
+  text-shadow: 1px 1px #000;
+}
+
+#quizSourceBadge.source-gemini {
+  background: #4b0010;
+  color: #FFD700;
+}
+
+#quizSourceBadge.source-fallback {
+  background: #555;
+  color: #ddd;
+}
+
+#quizExplain {
+  display: none;
+  align-items: center;
+  gap: 14px;
+  margin-top: 14px;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 2px solid #FFD700;
+  border-radius: 14px;
+  text-align: left;
+}
+
+#quizDomie {
+  width: 64px;
+  height: auto;
+  flex-shrink: 0;
+  image-rendering: pixelated;
+}
+
+#quizExplainText {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+#quizContinueBtn {
+  display: none;
+  margin-top: 14px;
+  width: 100%;
+}
+
+#countdownNumber {
+  font-family: 'Press Start 2P', cursive;
+  font-size: 96px;
+  color: #FFD700;
+  text-shadow: 4px 4px 0 #000, 0 0 30px rgba(255,215,0,.7);
+}
+
+/* TOUCH CONTROLS — shown only on touch devices (no mouse hover, coarse pointer) */
+#touchControls { display: none; }
+@media (hover: none) and (pointer: coarse) {
+  #touchControls { display: block; }
+}
+
+.touch-btn {
+  position: fixed;
+  bottom: 28px;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: linear-gradient(160deg, rgba(20,20,20,.75), rgba(0,0,0,.55));
+  border: 3px solid #FFD700;
+  color: #FFD700;
+  font-size: 26px;
+  font-weight: bold;
+  box-shadow: 0 4px 12px rgba(0,0,0,.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+  z-index: 20;
+}
+
+#touchLeft { left: 24px; }
+#touchRight { left: 100px; }
+#touchJump { right: 24px; }
+#touchUp { right: 24px; bottom: 104px; }
+#touchDown { right: 24px; }
+
+/* Per-mode touch layout: the maze (top-view) swaps the jump button for an
+   up/down d-pad; the other levels keep left/right/jump as before. */
+#touchUp, #touchDown { display: none; }
+body[data-mode="maze"] #touchUp,
+body[data-mode="maze"] #touchDown { display: flex; }
+body[data-mode="maze"] #touchJump { display: none; }
+
+.touch-btn.pressed {
+  background: rgba(255,215,0,.35);
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="gameCanvas"></canvas>
+
+<div id="hud">
+  <span data-i18n="hud_score_label">Score:</span> <span id="score">0</span> |
+  Level <span id="levelNum">1</span>/3 |
+  <span data-i18n="hud_topic_label">Topic:</span> <span id="lvl">Biology</span><span id="gradeDisplay" style="display:none">9</span>
+</div>
+
+<div id="summary" class="overlay-base">
+  <div class="card">
+    <h2 data-i18n="summary_title">Topic Complete!</h2>
+    <p id="resultText"></p>
+    
+
+
+	<button onclick="chooseAnotherTopic()" data-i18n="summary_btn_another">Choose Another Topic</button>
+  </div>
+</div>
+
+<div id="loadingOverlay" class="overlay-base" style="display:flex">
+  <div class="card">
+    <h2 data-i18n="loading_text">Loading questions...</h2>
+  </div>
+</div>
+
+<div id="errorOverlay" class="overlay-base">
+  <div class="card">
+    <h2 data-i18n="error_title">Couldn't load questions</h2>
+    <p data-i18n="error_body">No offline questions exist for this topic yet. Check the Gemini API key/network and try again.</p>
+    <button onclick="location.reload()" data-i18n="error_retry">Retry</button>
+    <button onclick="window.location.href='em-waves.html'" data-i18n="error_back">Back to Topic Select</button>
+  </div>
+</div>
+
+<div id="touchControls">
+  <div class="touch-btn" id="touchLeft">◀</div>
+  <div class="touch-btn" id="touchRight">▶</div>
+  <div class="touch-btn" id="touchJump">⬆</div>
+  <div class="touch-btn" id="touchUp">▲</div>
+  <div class="touch-btn" id="touchDown">▼</div>
+</div>
+
+<div id="levelIntro" class="overlay-base">
+  <div class="card">
+    <h2 id="levelIntroTitle"></h2>
+    <p id="levelIntroText"></p>
+    <button onclick="startNextLevel()" data-i18n="levelintro_go">Go!</button>
+  </div>
+</div>
+
+<div id="quizModal" class="overlay-base">
+  <div class="card">
+    <p id="quizSourceBadge"></p>
+    <p id="quizText"></p>
+    <div id="quizChoices"></div>
+    <p id="quizFeedback"></p>
+    <div id="quizExplain">
+      <img id="quizDomie" src="domie_idle.png" alt="Domie">
+      <p id="quizExplainText"></p>
+    </div>
+    <button id="quizContinueBtn" data-i18n="quiz_continue">Continue</button>
+  </div>
+</div>
+
+<div id="countdownOverlay" class="overlay-base">
+  <div id="countdownNumber"></div>
+</div>
+
+<script>
+// EM Waves edition: works even when a WebView has no localStorage, and takes its
+// settings from the URL so no login or earlier page is needed.
+(function () {
+  try { localStorage.setItem('__t', '1'); localStorage.removeItem('__t'); }
+  catch (e) {
+    var mem = {};
+    try {
+      Object.defineProperty(window, 'localStorage', { configurable: true, value: {
+        getItem: function (k) { return Object.prototype.hasOwnProperty.call(mem, k) ? mem[k] : null; },
+        setItem: function (k, v) { mem[k] = String(v); },
+        removeItem: function (k) { delete mem[k]; },
+        clear: function () { mem = {}; }
+      } });
+    } catch (e2) {}
+  }
+  var q = new URLSearchParams(location.search);
+  var chars = ['panpan', 'pepper', 'scouty', 'bubu', 'nomnom'];
+  var ls = window.localStorage;
+  if (q.get('topic')) ls.setItem('selectedTopic', q.get('topic'));
+  ls.setItem('selectedSubject', 'Electromagnetic Waves');
+  ls.setItem('selectedGrade', q.get('grade') || '9');
+  ls.setItem('selectedStartLevel', q.get('level') || '1');
+  ls.setItem('isGuest', 'true');
+  ls.setItem('loggedInUser', 'Guest');
+  if (chars.indexOf(q.get('char')) > -1) ls.setItem('chosenCharacter', q.get('char'));
+  else if (chars.indexOf(ls.getItem('chosenCharacter')) < 0) ls.setItem('chosenCharacter', 'panpan');
+})();
+</script>
+<script src="strings.js"></script>
+<script>
+// ================= CHARACTER GUARD =================
+// Blocks entry into gameplay from ANY path (Start Game, the Levels shortcut,
+// or a direct URL) if no character was ever confirmed on character page.html.
+// location.href navigation is async, so throw to halt the rest of this
+// script block — otherwise setup below (Gemini fetch, render loop) would
+// briefly run before the browser finishes navigating away.
+const VALID_CHARACTERS = ["panpan", "pepper", "scouty", "bubu", "nomnom"];
+if (!VALID_CHARACTERS.includes(localStorage.getItem("chosenCharacter"))) {
+  localStorage.setItem("chosenCharacter", "panpan"); // EM Waves edition: default character
+}
+
+// ================= CANVAS =================
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+function resize(){ canvas.width = innerWidth; canvas.height = innerHeight; }
+addEventListener("resize", resize);
+resize();
+
+const summary = document.getElementById("summary");
+const resultText = document.getElementById("resultText");
+const loadingOverlay = document.getElementById("loadingOverlay");
+const errorOverlay = document.getElementById("errorOverlay");
+const quizModal = document.getElementById("quizModal");
+
+
+// ================= TOPIC BACKGROUNDS =================
+const PLATFORMER_BACKGROUNDS = [
+  "GAMIFIEDDOMINICCHAPELPIXELATED.png",
+  "Level 1.png"
+];
+let platformerBgIndex = 0;
+
+// Four distinct Level 1 platform layouts (px above groundY for each of the
+// 10 platforms) so replays don't always see the same arrangement. Each
+// ascending step stays under the player's ~163px jump apex (v=14, g=0.6)
+// so every layout is fully climbable.
+const PLATFORMER_LAYOUTS = [
+  [160,240,160,240,160,240,160,240,160,240], // Zigzag staircase
+  [160,190,220,250,280,280,250,220,190,160], // Rolling hill
+  [160,160,260,160,160,260,160,160,260,160], // Plateau with gaps
+  [160,200,240,200,160,200,240,200,160,200]  // Wave
+];
+let platformerLayoutIndex = 0;
+
+// ================= LUCKY BLOCK (3D isometric Canvas 2D) =================
+let luckyBlockReady = true; // pure canvas — always ready
+let lbAngle = 0;
+
+function initLuckyBlock() {}
+
+function drawLuckyBlock(x, y, w, h) {
+  lbAngle += 0.04;
+  const bob = Math.sin(lbAngle) * h * 0.07;
+  y = y + bob;
+
+  // Draw the cube ABOVE the bounding box so the top & side overhang visibly
+  // The front face occupies the original h; top/side extend outside it.
+  const depth = h * 0.38; // top-face height — tall so it reads clearly
+  const sideW = w * 0.28; // right-face width — wide enough to see
+
+  const FRONT   = "#FFD700";
+  const TOP     = "#FFFAAA"; // near-white highlight
+  const SIDE    = "#7A5500"; // very dark brown shadow side
+  const BORDER  = "#3B2000";
+  const STUD    = "#FFFFF0";
+  const QWHITE  = "#FFFFFF";
+  const QSHADOW = "#7A5500";
+
+  ctx.save();
+
+  // Top face — extends ABOVE y so the cube pops upward
+  ctx.beginPath();
+  ctx.moveTo(x,           y);               // bottom-left of top face
+  ctx.lineTo(x + sideW,   y - depth);       // top-left
+  ctx.lineTo(x + w,       y - depth);       // top-right
+  ctx.lineTo(x + w - sideW, y);             // bottom-right of top face
+  ctx.closePath();
+  ctx.fillStyle = TOP;
+  ctx.fill();
+  ctx.strokeStyle = BORDER; ctx.lineWidth = 2; ctx.stroke();
+
+  // Right side face — extends to the RIGHT of the front face
+  ctx.beginPath();
+  ctx.moveTo(x + w - sideW, y);             // top-left of side (= bottom-right of top)
+  ctx.lineTo(x + w,         y - depth);     // top-right of side
+  ctx.lineTo(x + w,         y + h - depth); // bottom-right of side
+  ctx.lineTo(x + w - sideW, y + h);         // bottom-left of side
+  ctx.closePath();
+  ctx.fillStyle = SIDE;
+  ctx.fill();
+  ctx.strokeStyle = BORDER; ctx.lineWidth = 2; ctx.stroke();
+
+  // Front face — the main gold square at original position
+  const fw = w - sideW;
+  const fy = y;
+  const fh = h;
+  ctx.fillStyle = FRONT;
+  ctx.fillRect(x, fy, fw, fh);
+
+  // Inner border frame
+  const pad = fw * 0.09;
+  ctx.strokeStyle = BORDER;
+  ctx.lineWidth = Math.max(2, fw * 0.07);
+  ctx.strokeRect(x + pad, fy + pad, fw - pad * 2, fh - pad * 2);
+
+  // Corner studs
+  const sr = Math.max(3, fw * 0.09);
+  const ox = fw * 0.18, oy = fh * 0.18;
+  [[x + ox, fy + oy], [x + fw - ox, fy + oy],
+   [x + ox, fy + fh - oy], [x + fw - ox, fy + fh - oy]].forEach(([sx2, sy2]) => {
+    ctx.beginPath(); ctx.arc(sx2, sy2, sr, 0, Math.PI * 2);
+    ctx.fillStyle = STUD; ctx.fill();
+    ctx.strokeStyle = BORDER; ctx.lineWidth = 1.5; ctx.stroke();
+  });
+
+  // ? mark
+  const fontSize = Math.round(fh * 0.52);
+  ctx.font = `900 ${fontSize}px Arial`;
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  const qx = x + fw / 2, qy = fy + fh / 2 + fh * 0.04;
+  ctx.fillStyle = QSHADOW; ctx.fillText("?", qx + 2, qy + 2);
+  ctx.fillStyle = QWHITE;  ctx.fillText("?", qx, qy);
+
+  // Front face outline
+  ctx.strokeStyle = BORDER; ctx.lineWidth = 2;
+  ctx.strokeRect(x, fy, fw, fh);
+
+  ctx.restore();
+  return true;
+}
+
+// ================= QUESTIONS (offline fallback banks) =================
+// Per-topic offline content, bucketed by difficulty tier (not by numeric
+// level) so it can be picked by selectedGrade: grades 7-8 -> low, grade 9 ->
+// mid, grade 10 -> high. Used when a live Gemini call fails.
+// EM Waves edition: every topic is about the electromagnetic spectrum.
+// Same pool shape as the original (15 per topic = 5 per level); every difficulty tier uses it.
+const EM_QUESTIONS = {
+ "Radio and Microwaves": [
+  {
+   "text": "Which EM wave has the longest wavelength?",
+   "choices": [
+    "Microwaves",
+    "Radio waves",
+    "X-rays",
+    "Infrared"
+   ],
+   "correct": 2,
+   "explain": "Radio waves have the longest wavelengths, from about a meter to hundreds of kilometers."
+  },
+  {
+   "text": "Which kind of EM wave carries AM and FM radio signals through the air?",
+   "choices": [
+    "X-rays",
+    "Ultraviolet rays",
+    "Radio waves",
+    "Gamma rays"
+   ],
+   "correct": 3,
+   "explain": "Radio stations send sound as radio waves, which your radio picks up and turns back into sound."
+  },
+  {
+   "text": "Which appliance uses microwaves to heat food?",
+   "choices": [
+    "Refrigerator",
+    "Electric fan",
+    "Toaster",
+    "Microwave oven"
+   ],
+   "correct": 4,
+   "explain": "A microwave oven sends microwaves into the food, and the water inside absorbs them and heats up."
+  },
+  {
+   "text": "Compared with microwaves, radio waves have a...",
+   "choices": [
+    "Higher energy",
+    "Shorter wavelength",
+    "Higher frequency",
+    "Longer wavelength"
+   ],
+   "correct": 4,
+   "explain": "Radio waves sit at the long-wavelength end, so they have lower frequency and energy than microwaves."
+  },
+  {
+   "text": "Which EM wave do radar systems use to track airplanes and storms?",
+   "choices": [
+    "Microwaves",
+    "Ultraviolet rays",
+    "Gamma rays",
+    "Visible light"
+   ],
+   "correct": 1,
+   "explain": "Radar sends out microwave pulses and measures the echoes that bounce back."
+  },
+  {
+   "text": "Radio telescopes collect which kind of EM wave from distant space?",
+   "choices": [
+    "Ultraviolet rays",
+    "Gamma rays",
+    "Radio waves",
+    "X-rays"
+   ],
+   "correct": 3,
+   "explain": "Radio telescopes use big dishes to catch radio waves coming from stars and galaxies."
+  },
+  {
+   "text": "Mobile phones and Wi-Fi routers mostly send signals using...",
+   "choices": [
+    "X-rays and gamma rays",
+    "Ultraviolet and visible light",
+    "Radio waves and microwaves",
+    "Infrared only"
+   ],
+   "correct": 3,
+   "explain": "Wireless devices use radio and microwave frequencies to send data without wires."
+  },
+  {
+   "text": "What happens to food in a microwave oven?",
+   "choices": [
+    "The food becomes radioactive",
+    "The water in the food freezes",
+    "Water in the food absorbs the microwaves and heats up",
+    "A flame cooks the outside"
+   ],
+   "correct": 3,
+   "explain": "Microwaves make the water in food heat up, and the heat spreads through the rest of the food."
+  },
+  {
+   "text": "Which has the higher frequency?",
+   "choices": [
+    "Radio waves",
+    "They are exactly equal",
+    "Neither one has a frequency",
+    "Microwaves"
+   ],
+   "correct": 4,
+   "explain": "Microwaves have shorter wavelengths than radio waves, so their frequency is higher."
+  },
+  {
+   "text": "A radio wave has a frequency of 100 MHz (1 x 10^8 Hz). What is its wavelength? Use c = 3 x 10^8 m/s.",
+   "choices": [
+    "0.3 m",
+    "3 m",
+    "30 m",
+    "300 m"
+   ],
+   "correct": 2,
+   "explain": "Wavelength = c / f = (3 x 10^8) / (1 x 10^8) = 3 m."
+  },
+  {
+   "text": "What is the unit of frequency?",
+   "choices": [
+    "Hertz (Hz)",
+    "Watt (W)",
+    "Newton (N)",
+    "Meter (m)"
+   ],
+   "correct": 1,
+   "explain": "One hertz means one wave cycle every second."
+  },
+  {
+   "text": "Why can radio waves pass through walls and buildings so easily?",
+   "choices": [
+    "They are extremely hot",
+    "They are the fastest EM waves",
+    "They are made of sound",
+    "They have long wavelengths and low energy"
+   ],
+   "correct": 4,
+   "explain": "Long-wavelength, low-energy waves are not absorbed much by walls, so signals can reach inside buildings."
+  },
+  {
+   "text": "Which list goes from longest to shortest wavelength?",
+   "choices": [
+    "Radio, microwave, infrared",
+    "Radio, infrared, microwave",
+    "Infrared, microwave, radio",
+    "Microwave, radio, infrared"
+   ],
+   "correct": 1,
+   "explain": "Wavelength shrinks as you go from radio to microwave to infrared."
+  },
+  {
+   "text": "What does the metal mesh in a microwave oven's door do?",
+   "choices": [
+    "Makes the oven quieter",
+    "Produces gamma rays",
+    "Keeps the microwaves inside the oven",
+    "Makes the food colder"
+   ],
+   "correct": 3,
+   "explain": "The holes in the mesh are much smaller than the microwave wavelength, so the waves cannot get through."
+  },
+  {
+   "text": "Which type of EM wave has wavelengths from about 1 mm to 1 m?",
+   "choices": [
+    "Visible light",
+    "Radio waves",
+    "X-rays",
+    "Microwaves"
+   ],
+   "correct": 4,
+   "explain": "Microwaves cover the range between about 1 millimeter and 1 meter."
+  }
+ ],
+ "Infrared and Visible Light": [
+  {
+   "text": "We feel infrared radiation as...",
+   "choices": [
+    "Sound",
+    "Color",
+    "Heat",
+    "Pressure"
+   ],
+   "correct": 3,
+   "explain": "Warm objects give off infrared, which our skin feels as heat."
+  },
+  {
+   "text": "Which device sends invisible infrared signals to change TV channels?",
+   "choices": [
+    "Speaker",
+    "Remote control",
+    "Microphone",
+    "Battery charger"
+   ],
+   "correct": 2,
+   "explain": "A remote's infrared LED sends coded pulses that the TV detects."
+  },
+  {
+   "text": "Thermal cameras make pictures by detecting...",
+   "choices": [
+    "Gamma rays",
+    "Infrared radiation",
+    "Radio waves",
+    "X-rays"
+   ],
+   "correct": 2,
+   "explain": "Warm objects glow in infrared, so thermal cameras can see them even in the dark."
+  },
+  {
+   "text": "Which is the only part of the EM spectrum that human eyes can see?",
+   "choices": [
+    "Infrared",
+    "Ultraviolet",
+    "Visible light",
+    "Microwaves"
+   ],
+   "correct": 3,
+   "explain": "Our eyes only respond to a narrow band called visible light."
+  },
+  {
+   "text": "Which list shows visible light from longest to shortest wavelength?",
+   "choices": [
+    "Blue, green, red, orange, yellow, violet, indigo",
+    "Violet, indigo, blue, green, yellow, orange, red",
+    "Red, orange, green, yellow, blue, indigo, violet",
+    "Red, orange, yellow, green, blue, indigo, violet"
+   ],
+   "correct": 4,
+   "explain": "Red has the longest wavelength and violet the shortest, which is the order of a rainbow."
+  },
+  {
+   "text": "Which color of visible light has the longest wavelength?",
+   "choices": [
+    "Blue",
+    "Red",
+    "Green",
+    "Violet"
+   ],
+   "correct": 2,
+   "explain": "Red light is at the long-wavelength end of the visible spectrum."
+  },
+  {
+   "text": "Which color of visible light has the highest frequency and energy?",
+   "choices": [
+    "Orange",
+    "Yellow",
+    "Violet",
+    "Red"
+   ],
+   "correct": 3,
+   "explain": "Violet is at the short-wavelength end, so it has the highest frequency and energy."
+  },
+  {
+   "text": "What does a prism show about white light?",
+   "choices": [
+    "It is a mixture of many colors",
+    "It is made of sound",
+    "It is invisible",
+    "It is a single color"
+   ],
+   "correct": 1,
+   "explain": "A prism bends each color by a different amount, spreading white light into a rainbow."
+  },
+  {
+   "text": "About what wavelength range is visible light?",
+   "choices": [
+    "400 to 700 nm",
+    "1 mm to 1 m",
+    "0.01 to 10 nm",
+    "10 to 400 nm"
+   ],
+   "correct": 1,
+   "explain": "Visible light runs from about 400 nanometers (violet) to 700 nanometers (red)."
+  },
+  {
+   "text": "Compared with visible light, infrared has a...",
+   "choices": [
+    "Shorter wavelength",
+    "Exactly the same wavelength",
+    "Higher frequency",
+    "Longer wavelength"
+   ],
+   "correct": 4,
+   "explain": "Infrared sits just beyond red light, so its wavelength is longer than visible light's."
+  },
+  {
+   "text": "Heat lamps and toasters warm things mostly by giving off...",
+   "choices": [
+    "Ultraviolet rays",
+    "X-rays",
+    "Gamma rays",
+    "Infrared radiation"
+   ],
+   "correct": 4,
+   "explain": "Hot objects like heater coils radiate infrared, which warms whatever absorbs it."
+  },
+  {
+   "text": "Fiber-optic cables carry internet data as pulses of...",
+   "choices": [
+    "Sound",
+    "Water",
+    "Gamma rays",
+    "Light"
+   ],
+   "correct": 4,
+   "explain": "Fiber-optic cables send data as flashes of light along thin glass strands."
+  },
+  {
+   "text": "Plants use which part of the EM spectrum for photosynthesis?",
+   "choices": [
+    "Gamma rays",
+    "Visible light",
+    "X-rays",
+    "Radio waves"
+   ],
+   "correct": 2,
+   "explain": "Plants absorb mostly red and blue visible light to make their food."
+  },
+  {
+   "text": "Why does a red shirt look red?",
+   "choices": [
+    "It makes its own red light",
+    "It reflects red light and absorbs most other colors",
+    "It absorbs red light and reflects the rest",
+    "It gives off infrared only"
+   ],
+   "correct": 2,
+   "explain": "We see the colors an object reflects, and a red shirt reflects red light."
+  },
+  {
+   "text": "Which statement about infrared and visible light is TRUE?",
+   "choices": [
+    "Infrared has a higher frequency than visible light",
+    "Infrared travels faster in a vacuum",
+    "Visible light has a higher frequency than infrared",
+    "They have the same frequency"
+   ],
+   "correct": 3,
+   "explain": "Visible light has a shorter wavelength, so a higher frequency. Both travel at the speed of light in a vacuum."
+  }
+ ],
+ "Ultraviolet, X-rays and Gamma Rays": [
+  {
+   "text": "What protects Earth from most of the Sun's harmful UV rays?",
+   "choices": [
+    "Rain clouds",
+    "Mountains",
+    "The Moon",
+    "The ozone layer"
+   ],
+   "correct": 4,
+   "explain": "The ozone layer absorbs most of the dangerous ultraviolet radiation from the Sun."
+  },
+  {
+   "text": "Too much UV exposure can cause...",
+   "choices": [
+    "Hearing loss",
+    "Broken bones",
+    "Sunburn and skin damage",
+    "Nearsightedness"
+   ],
+   "correct": 3,
+   "explain": "UV carries enough energy to damage skin cells, causing sunburn and raising skin cancer risk."
+  },
+  {
+   "text": "Which wave from the Sun helps your skin make vitamin D?",
+   "choices": [
+    "Ultraviolet light",
+    "Gamma rays",
+    "Microwaves",
+    "Radio waves"
+   ],
+   "correct": 1,
+   "explain": "Ultraviolet B light triggers your skin to make vitamin D."
+  },
+  {
+   "text": "Doctors use X-rays mainly to...",
+   "choices": [
+    "Heat food",
+    "Take pictures of bones",
+    "Measure temperature",
+    "Send TV signals"
+   ],
+   "correct": 2,
+   "explain": "X-rays pass through soft tissue but are absorbed by bone, so they can photograph bones."
+  },
+  {
+   "text": "Why do bones show up clearly in an X-ray image?",
+   "choices": [
+    "Bones glow in the dark",
+    "Soft tissue reflects all X-rays",
+    "Bones absorb more X-rays than soft tissue",
+    "X-rays cannot pass through anything"
+   ],
+   "correct": 3,
+   "explain": "Dense bone blocks more X-rays, which leaves white areas on the image."
+  },
+  {
+   "text": "Which material is used to shield people from X-rays, like a dentist's apron?",
+   "choices": [
+    "Plastic wrap",
+    "Lead",
+    "Cotton",
+    "Paper"
+   ],
+   "correct": 2,
+   "explain": "Dense lead absorbs X-rays, so lead aprons protect the body."
+  },
+  {
+   "text": "Where do gamma rays come from?",
+   "choices": [
+    "Light bulbs",
+    "Nuclear reactions and radioactive decay",
+    "Radio towers",
+    "Microwave ovens"
+   ],
+   "correct": 2,
+   "explain": "Gamma rays are released by atomic nuclei, such as in radioactive decay and nuclear reactions."
+  },
+  {
+   "text": "How do doctors use focused gamma rays in medicine?",
+   "choices": [
+    "To warm patients",
+    "To take sunlight photos",
+    "To make phone calls",
+    "To destroy cancer cells"
+   ],
+   "correct": 4,
+   "explain": "Carefully aimed gamma rays can kill cancer cells in radiotherapy."
+  },
+  {
+   "text": "Which EM wave has the highest energy?",
+   "choices": [
+    "Ultraviolet rays",
+    "Radio waves",
+    "Gamma rays",
+    "X-rays"
+   ],
+   "correct": 3,
+   "explain": "Gamma rays have the shortest wavelengths and the highest frequency and energy."
+  },
+  {
+   "text": "Ultraviolet lamps are used to...",
+   "choices": [
+    "Cook food",
+    "Send radio shows",
+    "Detect airplanes",
+    "Kill germs on surfaces and in water"
+   ],
+   "correct": 4,
+   "explain": "UV light damages the genetic material of germs, which can sterilize surfaces and water."
+  },
+  {
+   "text": "Which two kinds of EM waves are called ionizing radiation?",
+   "choices": [
+    "Infrared and visible light",
+    "Radio waves and X-rays",
+    "Radio waves and microwaves",
+    "X-rays and gamma rays"
+   ],
+   "correct": 4,
+   "explain": "Their photons carry enough energy to knock electrons out of atoms, which can damage living cells."
+  },
+  {
+   "text": "Compared with ultraviolet, X-rays have a...",
+   "choices": [
+    "Shorter wavelength and higher energy",
+    "Shorter wavelength and lower energy",
+    "Longer wavelength and lower energy",
+    "Longer wavelength and higher energy"
+   ],
+   "correct": 1,
+   "explain": "X-rays are further along the spectrum, so wavelength gets shorter and energy gets higher."
+  },
+  {
+   "text": "A black light makes some materials glow because it gives off...",
+   "choices": [
+    "Radio waves",
+    "Microwaves",
+    "Ultraviolet light",
+    "Infrared radiation"
+   ],
+   "correct": 3,
+   "explain": "Some materials absorb UV and give the energy back as visible light, so they appear to glow."
+  },
+  {
+   "text": "Airport security machines use which EM wave to scan inside bags?",
+   "choices": [
+    "X-rays",
+    "Visible light",
+    "Radio waves",
+    "Microwaves"
+   ],
+   "correct": 1,
+   "explain": "X-rays pass through the bag and show the shapes of the objects inside."
+  },
+  {
+   "text": "About what wavelength range is ultraviolet light?",
+   "choices": [
+    "400 to 700 nm",
+    "10 to 400 nm",
+    "Less than 0.01 nm",
+    "1 mm to 1 m"
+   ],
+   "correct": 2,
+   "explain": "Ultraviolet falls between X-rays and violet light, from about 10 to 400 nanometers."
+  }
+ ],
+ "The Whole Spectrum": [
+  {
+   "text": "Which list goes from LOWEST to HIGHEST energy?",
+   "choices": [
+    "Microwave, radio, infrared, visible, X-ray, ultraviolet, gamma",
+    "Gamma, X-ray, ultraviolet, visible, infrared, microwave, radio",
+    "Radio, microwave, infrared, visible, ultraviolet, X-ray, gamma",
+    "Radio, infrared, microwave, visible, ultraviolet, X-ray, gamma"
+   ],
+   "correct": 3,
+   "explain": "Energy increases as frequency increases, from radio waves up to gamma rays."
+  },
+  {
+   "text": "About how fast do all EM waves travel in a vacuum?",
+   "choices": [
+    "3 x 10^5 m/s",
+    "3 x 10^8 m/s",
+    "340 m/s",
+    "3 x 10^3 m/s"
+   ],
+   "correct": 2,
+   "explain": "All EM waves travel at the speed of light, about 300,000,000 meters per second, in a vacuum."
+  },
+  {
+   "text": "Do EM waves need a medium (like air or water) to travel?",
+   "choices": [
+    "Yes, they need air",
+    "Yes, they need solid ground",
+    "Yes, they need water",
+    "No, they can travel through empty space"
+   ],
+   "correct": 4,
+   "explain": "That is how sunlight reaches Earth across the vacuum of space."
+  },
+  {
+   "text": "EM waves are made of vibrating...",
+   "choices": [
+    "Water droplets",
+    "Sound pressure",
+    "Air particles",
+    "Electric and magnetic fields"
+   ],
+   "correct": 4,
+   "explain": "An EM wave is an electric field and a magnetic field vibrating together as the wave moves."
+  },
+  {
+   "text": "Which equation relates wave speed, frequency and wavelength?",
+   "choices": [
+    "c = f / wavelength",
+    "c = f + wavelength",
+    "c = f x wavelength",
+    "c = wavelength / f"
+   ],
+   "correct": 3,
+   "explain": "The speed of the wave equals its frequency times its wavelength."
+  },
+  {
+   "text": "When the frequency of an EM wave increases, its wavelength...",
+   "choices": [
+    "Becomes infinite",
+    "Decreases",
+    "Increases",
+    "Stays the same"
+   ],
+   "correct": 2,
+   "explain": "The speed stays fixed, so a higher frequency means a shorter wavelength."
+  },
+  {
+   "text": "Which EM wave has the LOWEST frequency?",
+   "choices": [
+    "Ultraviolet rays",
+    "X-rays",
+    "Radio waves",
+    "Gamma rays"
+   ],
+   "correct": 3,
+   "explain": "Radio waves sit at the low-frequency end of the spectrum."
+  },
+  {
+   "text": "An EM wave has a wavelength of 3 m. What is its frequency? Use c = 3 x 10^8 m/s.",
+   "choices": [
+    "1 x 10^9 Hz",
+    "9 x 10^8 Hz",
+    "1 x 10^8 Hz",
+    "3 x 10^8 Hz"
+   ],
+   "correct": 3,
+   "explain": "f = c / wavelength = (3 x 10^8) / 3 = 1 x 10^8 Hz."
+  },
+  {
+   "text": "Orange light has a wavelength of 6 x 10^-7 m. What is its frequency? Use c = 3 x 10^8 m/s.",
+   "choices": [
+    "2 x 10^-15 Hz",
+    "1.8 x 10^2 Hz",
+    "5 x 10^14 Hz",
+    "5 x 10^2 Hz"
+   ],
+   "correct": 3,
+   "explain": "f = c / wavelength = (3 x 10^8) / (6 x 10^-7) = 5 x 10^14 Hz."
+  },
+  {
+   "text": "Which part of the EM spectrum can the human eye detect?",
+   "choices": [
+    "Only visible light",
+    "Radio waves",
+    "X-rays",
+    "Infrared and ultraviolet"
+   ],
+   "correct": 1,
+   "explain": "Our eyes respond only to wavelengths from about 400 to 700 nm."
+  },
+  {
+   "text": "The energy of an EM wave's photons goes up when its...",
+   "choices": [
+    "Speed in a vacuum goes down",
+    "Frequency goes down",
+    "Frequency goes up",
+    "Wavelength gets longer"
+   ],
+   "correct": 3,
+   "explain": "Higher-frequency waves carry more energy per photon."
+  },
+  {
+   "text": "Which wave-and-use pair is correct?",
+   "choices": [
+    "Gamma rays and FM radio broadcasts",
+    "Ultraviolet and TV remotes",
+    "X-rays and medical imaging of bones",
+    "Microwaves and seeing bones"
+   ],
+   "correct": 3,
+   "explain": "X-rays pass through soft tissue but not bone, which makes them useful for imaging."
+  },
+  {
+   "text": "Which of these is generally the most harmful to living cells?",
+   "choices": [
+    "Gamma rays",
+    "Infrared radiation",
+    "Visible light",
+    "Radio waves"
+   ],
+   "correct": 1,
+   "explain": "Gamma rays are highly ionizing, so they can damage cells and DNA."
+  },
+  {
+   "text": "Wavelengths of EM waves are measured in...",
+   "choices": [
+    "Hertz",
+    "Kilograms",
+    "Meters, or nanometers for light",
+    "Seconds"
+   ],
+   "correct": 3,
+   "explain": "Wavelength is a length, so it is measured in meters or smaller units like nanometers."
+  },
+  {
+   "text": "Which part of the spectrum lies between microwaves and visible light?",
+   "choices": [
+    "X-rays",
+    "Ultraviolet",
+    "Infrared",
+    "Radio waves"
+   ],
+   "correct": 3,
+   "explain": "Going up in frequency, the order is microwave, infrared, then visible light."
+  }
+ ]
+};
+const FALLBACK_BANKS = {};
+Object.keys(EM_QUESTIONS).forEach(k => {
+  FALLBACK_BANKS[k] = { low: EM_QUESTIONS[k], mid: EM_QUESTIONS[k], high: EM_QUESTIONS[k] };
+});
+
+// ================= GRADE / TOPIC =================
+const selectedGrade = parseInt(localStorage.getItem("selectedGrade")) || 9;
+const selectedTopic = localStorage.getItem("selectedTopic") || "Radio and Microwaves";
+const selectedSubject = localStorage.getItem("selectedSubject") || "Electromagnetic Waves";
+document.getElementById("lvl").textContent = topicLabel(selectedTopic);
+document.getElementById("gradeDisplay").textContent = selectedGrade;
+
+// ================= APPS SCRIPT BACKEND =================
+const API_URL = ""; // EM Waves edition runs fully offline: nothing is sent to any server
+
+function saveProgressToServer(completedTopics) {
+  return; // offline edition
+  const username = localStorage.getItem("loggedInUser");
+  const isGuest = localStorage.getItem("isGuest") === "true";
+  if (!username || isGuest) return;
+  fetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify({ action: "saveProgress", username, completedTopics, selectedGrade })
+  }).catch(() => {}); // fire-and-forget, offline progress still lives in localStorage
+}
+
+function submitScoreToLeaderboard() {
+  return; // offline edition
+  // Automatic score submission at topic completion. Unlike saveProgressToServer,
+  // guests submit too — their guest name is stored in loggedInUser as well.
+  const name = localStorage.getItem("loggedInUser");
+  if (!name) return;
+  fetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify({ action: "addScore", name, score })
+  }).catch(() => {});
+}
+
+// ================= GEMINI QUESTION GENERATION =================
+// Calls are proxied through apps-script-backend.gs (action: "generateQuestions")
+// rather than hitting Google directly — client-side Gemini keys are no longer
+// viable on this account (AI Studio keys reject direct REST calls; Cloud
+// Console keys for the Gemini API now require a service-account binding the
+// browser can't hold). The backend uses its own authorized identity instead,
+// so the frontend never sees a Gemini credential at all.
+
+// The pool is now 15 (5 per level). Accept >= 11 so a slightly short Gemini
+// response is still usable; anything smaller falls back to the offline bank.
+function validateQuestions(arr) {
+  return Array.isArray(arr) && arr.length >= 11 && arr.every(q =>
+    q && typeof q.text === "string" &&
+    Array.isArray(q.choices) && q.choices.length === 4 &&
+    Number.isInteger(q.correct) && q.correct >= 1 && q.correct <= 4
+  );
+}
+
+const GEMINI_TIMEOUT_MS = 20000;
+
+async function fetchGeminiQuestions(topic, grade) {
+  // Abort if the backend takes longer than 20s so a slow call falls back to
+  // the offline bank instead of leaving the player on the loading screen.
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), GEMINI_TIMEOUT_MS);
+  try {
+    // No explicit Content-Type header — matches the existing saveProgress/
+    // addScore calls' pattern so this stays a CORS "simple request" and skips
+    // the preflight OPTIONS check that Apps Script Web Apps don't handle.
+    const res = await fetch(API_URL, {
+      method: "POST",
+      body: JSON.stringify({ action: "generateQuestions", topic, subject: selectedSubject, grade }),
+      signal: controller.signal
+    });
+    if (!res.ok) throw new Error("backend_http_" + res.status);
+
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || "backend_generation_failed");
+
+    if (!validateQuestions(data.questions)) throw new Error("gemini_shape_invalid");
+    return data.questions;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function pickFallback(topic, grade) {
+  const tier = grade <= 8 ? "low" : grade === 9 ? "mid" : "high";
+  if (getLanguage() === "tl" && SCI_MATH_TOPICS.includes(topic) && FALLBACK_BANKS_TL[topic]) {
+    return FALLBACK_BANKS_TL[topic][tier];
+  }
+  return FALLBACK_BANKS[topic][tier];
+}
+
+function shuffleArray(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+let activeQuestions = null;
+let loadFailed = false;
+let questionsSource = null; // "gemini" or "fallback"
+
+// Each of the 3 levels draws its own distinct 5-question slice of the pool, so
+// questions no longer carry over between levels. Pools are 15 (Gemini asks for
+// 15; every offline tier holds 15). The modulo keeps it safe if a pool ever
+// comes back smaller than 15.
+function questionsForLevel(level) {
+  const pool = activeQuestions || [];
+  if (!pool.length) return [];
+  const per = 5, start = (level - 1) * per;
+  const out = [];
+  for (let i = 0; i < per; i++) out.push(pool[(start + i) % pool.length]);
+  return out;
+}
+
+// A wrong answer doesn't let the player past — it swaps in a different
+// question from the same topic pool so the same obstacle can be retried
+// with fresh content instead of repeating the one just missed.
+function pickReplacementQuestion(exclude) {
+  const pool = (activeQuestions || []).filter(q => q.text !== exclude.text);
+  if (!pool.length) return exclude;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+// Live Gemini generation is disabled for now: the Generative Language API
+// only supports API-key auth (not viable client-side on this account) and
+// the OAuth-compatible alternative, Vertex AI, needs billing enabled — not
+// worth it for this project. fetchGeminiQuestions()/generateQuestions stay
+// in place (frontend + apps-script-backend.gs) as dormant plumbing in case
+// Vertex AI gets set up later; loadQuestions() just goes straight to the
+// offline bank so players aren't stuck waiting on a call that can't succeed.
+async function loadQuestions() {
+  if (FALLBACK_BANKS[selectedTopic]) {
+    activeQuestions = shuffleArray([...pickFallback(selectedTopic, selectedGrade)]);
+    questionsSource = "fallback";
+  } else {
+    loadFailed = true;
+  }
+}
+
+// ================= SCORE =================
+let score = 0;
+const scoreEl = document.getElementById("score");
+
+// ================= LEVEL PROGRESSION =================
+// Each topic run is 3 levels: 1 = platformer, 2 = top-view maze, 3 = flappy.
+// Correct answers are worth more in later levels; score is cumulative across
+// the run and only resets when a fresh topic run starts. Dying mid-level
+// rolls score back to the checkpoint taken when that level was entered.
+const POINTS_PER_LEVEL = { 1: 1, 2: 2, 3: 3 };
+const LEVEL_NAMES = { 1: "Platformer", 2: "The Maze", 3: "Flappy Flight" };
+const LEVEL_NAMES_TL = { 1: "Platformer", 2: "Ang Labirinto", 3: "Paglipad" };
+function levelName(n) {
+  return getLanguage() === "tl" ? LEVEL_NAMES_TL[n] : LEVEL_NAMES[n];
+}
+let currentLevel = 1;
+let levelStartScore = 0;
+const levelNumEl = document.getElementById("levelNum");
+
+// ================= IMAGES =================
+const chosenCharacter = localStorage.getItem("chosenCharacter") || "panpan";
+const playerSprites = {
+  idle: new Image(),
+  walk: new Image(),
+  jump: new Image()
+};
+playerSprites.idle.src = `${chosenCharacter}_idle.png`;
+playerSprites.walk.src = `${chosenCharacter}_walk.png`;
+playerSprites.jump.src = `${chosenCharacter}_jump.png`;
+
+function currentPlayerSprite() {
+  if (!player.onGround) return playerSprites.jump;
+  if (player.vx !== 0) return playerSprites.walk;
+  return playerSprites.idle;
+}
+
+const platformImg = new Image();
+platformImg.src = "block.png";
+
+// Level 1 terrain art: grass-topped dirt for the ground, stone chunks for
+// the floating platforms, and a green pipe as the level-exit teleporter.
+const baseImg = new Image();
+baseImg.src = "Base.PNG";
+const stonePlatformImg = new Image();
+stonePlatformImg.src = "stone-platform.png";
+const pipeImg = new Image();
+pipeImg.src = "pipe-green.png";
+
+// ================= PLAYER =================
+const player = {
+  x:120, y:100, w:48, h:72,
+  vx:0, vy:0,
+  speed:3.5,
+  onGround:false,
+  spawnX:120,
+  spawnY:100
+};
+
+const gravity = 0.6;
+
+// ================= INPUT =================
+const keys = {};
+addEventListener("keydown", e => keys[e.code] = true);
+addEventListener("keyup", e => keys[e.code] = false);
+function clearKeys(){ for (let k in keys) keys[k] = false; }
+
+// ================= TOUCH CONTROLS =================
+// Same `keys` map the keyboard uses — update() doesn't need to know the source.
+function bindTouchButton(id, code) {
+  const btn = document.getElementById(id);
+  const press = e => { e.preventDefault(); keys[code] = true; btn.classList.add("pressed"); };
+  const release = e => { e.preventDefault(); keys[code] = false; btn.classList.remove("pressed"); };
+  btn.addEventListener("touchstart", press, { passive: false });
+  btn.addEventListener("touchend", release, { passive: false });
+  btn.addEventListener("touchcancel", release, { passive: false });
+}
+bindTouchButton("touchLeft", "ArrowLeft");
+bindTouchButton("touchRight", "ArrowRight");
+bindTouchButton("touchJump", "Space");
+bindTouchButton("touchUp", "ArrowUp");
+bindTouchButton("touchDown", "ArrowDown");
+
+// ================= OBJECTS =================
+let platforms=[], spikes=[], questions=[];
+let finishLine=null;
+let cameraX=0, cameraY=0;
+let levelFinished=false;
+let isAsking=false;
+
+// Maze (level 2, top-view)
+let walls=[], gates=[], mazeExit=null;
+let mazeW=0, mazeH=0;
+
+// Flappy (level 3)
+let pipes=[], flappyGates=[], flappyFinish=null, flappyHold=null, flappyCooldown=0, flapLatch=false;
+// Slowed and floatied per playtest feedback: less gravity/impulse makes the
+// flap response easier to control, and a slower scroll gives more reaction
+// time to line up with the pipe gaps (widened to 280px).
+const FLAPPY_GRAVITY=0.22, FLAPPY_IMPULSE=-6, FLAPPY_SCROLL=1.5;
+
+function rectsOverlap(a,b){
+  return a.x < b.x + b.w && a.x + a.w > b.x &&
+         a.y < b.y + b.h && a.y + a.h > b.y;
+}
+
+// ================= BUILD LEVELS =================
+function buildCurrentLevel(){
+  // Fresh entry and mid-level deaths both land here: score rolls back to the
+  // checkpoint taken when this level was entered.
+  score = levelStartScore; scoreEl.textContent = score;
+  levelNumEl.textContent = currentLevel;
+  levelFinished = false;
+  platforms=[]; spikes=[]; questions=[];
+  walls=[]; gates=[]; mazeExit=null;
+  pipes=[]; flappyGates=[]; flappyFinish=null; flappyHold=null; flappyCooldown=0;
+  finishLine=null; cameraX=0; cameraY=0;
+
+  if (activeQuestions && activeQuestions.length >= 5) {
+    const s = (currentLevel - 1) * 5;
+    const slice = activeQuestions.splice(s, 5);
+    shuffleArray(slice);
+    activeQuestions.splice(s, 0, ...slice);
+  }
+
+  if (currentLevel === 1) buildPlatformerLevel();
+  else if (currentLevel === 2) buildMazeLevel();
+  else buildFlappyLevel();
+
+  clearKeys();
+}
+
+function buildPlatformerLevel(){
+  document.body.dataset.mode = "platformer";
+  document.body.style.backgroundImage =
+    `url('${PLATFORMER_BACKGROUNDS[platformerBgIndex % PLATFORMER_BACKGROUNDS.length]}')`;
+  platformerBgIndex++;
+
+  const groundY = canvas.height - 96;
+  const levelWidth = 2000;
+
+  platforms.push({x:0,y:groundY,w:levelWidth,h:96,type:"ground"});
+
+  const layout = PLATFORMER_LAYOUTS[platformerLayoutIndex % PLATFORMER_LAYOUTS.length];
+  platformerLayoutIndex++;
+
+  for(let i=0;i<10;i++){
+    const px=300+i*200;
+    const py=groundY-layout[i % layout.length];
+    platforms.push({x:px,y:py,w:200,h:32,type:"platform"});
+    spikes.push({x:px+80,y:py-32,w:40,h:24});
+  }
+
+  // Staggered heights (not a flat row) so the lucky blocks zigzag instead
+  // of sitting parallel to each other; still within jump reach given the
+  // platform layout the player climbs past.
+  const QUESTION_HEIGHT_OFFSETS = [200, 260, 170, 300, 230];
+  questionsForLevel(1).forEach((q,i)=>{
+    questions.push({
+      x:400+i*300,
+      y:groundY-QUESTION_HEIGHT_OFFSETS[i % QUESTION_HEIGHT_OFFSETS.length],
+      w:60,h:60,
+      used:false,
+      data:q
+    });
+  });
+
+  // Green pipe marks the level exit/teleporter to Level 2.
+  finishLine={x:levelWidth-70,y:groundY-140,w:70,h:140};
+
+  Object.assign(player,{x:player.spawnX,y:player.spawnY,vx:0,vy:0});
+}
+
+// Top-view maze maps: `#` wall, `.` floor, `S` start, `E` exit, `G` question
+// gate (solid until its question is answered correctly). Walls/gates are
+// plain AABB rects so custom tile art later is a render-only swap. Three
+// distinct layouts (each with exactly 4 gates) cycle on every replay.
+const MAZE_LAYOUTS = [
+  // "Branching" — the original hand-authored layout.
+  [
+    "#############",
+    "#S..#....G..#",
+    "###G#.#####G#",
+    "#...#.#...#.#",
+    "#.###.#.#.#.#",
+    "#.#...#.#.G.#",
+    "#.#.###.###.#",
+    "#...#....E###",
+    "#############"
+  ],
+  // "Snake" — a single back-and-forth corridor, gate at every turn.
+  [
+    "#############",
+    "#S....G.....#",
+    "###########.#",
+    "#.....G.....#",
+    "#.###########",
+    "#.....G.....#",
+    "###########.#",
+    "#.....G....E#",
+    "#############"
+  ],
+  // "Rooms" — six connected rooms in a 3x2 grid, gated doorways between them.
+  [
+    "#############",
+    "#...#...#...#",
+    "#S..G...G...#",
+    "#...#...#...#",
+    "###########.#",
+    "#...#...#...#",
+    "#.E.G...G...#",
+    "#...#...#...#",
+    "#############"
+  ]
+];
+let mazeLayoutIndex = 0;
+const MAZE_TILE = 80;
+
+// Level 3 backdrop photos, cycling the same way PLATFORMER_BACKGROUNDS does.
+const FLAPPY_BACKGROUNDS = [
+  "FLAPPYBIRDBG.png",
+  "GAMIFIEDJACQUESPIXELATED.png"
+];
+let flappyBgIndex = 0;
+
+// Level 2 backdrop photos, cycling the same way PLATFORMER_BACKGROUNDS does.
+const MAZE_BACKGROUNDS = [
+  "GAMIFIEDCONVENTPIXELATED (1).png",
+  "GAMIFIEDGATE3(2)PIXELATED (1).png"
+];
+let mazeBgIndex = 0;
+const mazeBgImg = new Image();
+
+function buildMazeLevel(){
+  document.body.dataset.mode = "maze";
+  // Seen from above: plain dark floor instead of the side-view topic sky.
+  document.body.style.backgroundImage = "none";
+  document.body.style.backgroundColor = "#141426";
+
+  mazeBgImg.src = MAZE_BACKGROUNDS[mazeBgIndex % MAZE_BACKGROUNDS.length];
+  mazeBgIndex++;
+
+  const activeMazeMap = MAZE_LAYOUTS[mazeLayoutIndex % MAZE_LAYOUTS.length];
+  mazeLayoutIndex++;
+
+  mazeW = activeMazeMap[0].length * MAZE_TILE;
+  mazeH = activeMazeMap.length * MAZE_TILE;
+
+  const mazeQs = questionsForLevel(2);
+  let gateCount = 0;
+  activeMazeMap.forEach((row, r) => {
+    [...row].forEach((cell, c) => {
+      const x = c*MAZE_TILE, y = r*MAZE_TILE;
+      if (cell === "#") walls.push({x, y, w:MAZE_TILE, h:MAZE_TILE});
+      else if (cell === "G") gates.push({
+        x, y, w:MAZE_TILE, h:MAZE_TILE, open:false, cooldown:0,
+        data: mazeQs[gateCount++ % mazeQs.length]
+      });
+      else if (cell === "E") mazeExit = {x:x+10, y:y+10, w:MAZE_TILE-20, h:MAZE_TILE-20};
+      else if (cell === "S") Object.assign(player, {
+        x: x + (MAZE_TILE - player.w)/2,
+        y: y + (MAZE_TILE - player.h)/2,
+        vx:0, vy:0
+      });
+    });
+  });
+
+  player.onGround = true; // keeps the sprite on walk/idle frames
+}
+
+function buildFlappyLevel(){
+  document.body.dataset.mode = "flappy";
+  document.body.style.backgroundImage =
+    `url('${FLAPPY_BACKGROUNDS[flappyBgIndex % FLAPPY_BACKGROUNDS.length]}')`;
+  flappyBgIndex++;
+
+  const groundY = canvas.height - 60;
+  // Easier tuning: wider gaps and more space between pipes.
+  const gapH = 280, pipeW = 70, spacing = 480;
+  const flappyQs = questionsForLevel(3);
+  let qi = 0;
+  for(let i=0;i<10;i++){
+    const gapY = 90 + Math.random() * Math.max(80, groundY - gapH - 180);
+    const pipeX = canvas.width + 200 + i*spacing;
+    pipes.push({ x: pipeX, w: pipeW, gapY, gapH });
+
+    // Every 3rd pipe gets a question — but the lucky block now stands as its
+    // own full-height gate well before the pipe, not blocking part of the
+    // pipe's own gap. The pipe itself is always a normal, passable obstacle.
+    const isQ = (i+1) % 3 === 0 && flappyQs.length > 0;
+    if(isQ){
+      flappyGates.push({
+        x: pipeX - 220, w: 60,
+        open: false,
+        question: flappyQs[qi++ % flappyQs.length]
+      });
+    }
+  }
+  flappyFinish = { x: canvas.width + 200 + 10*spacing + 150, w: 20 };
+
+  player.onGround = false; // keeps the sprite on the jump frame
+  flapLatch = true;        // require a fresh press for the first flap
+  Object.assign(player, {x: 160, y: canvas.height/2 - player.h/2, vx:0, vy:0});
+}
+
+// ================= GAME LOOP =================
+function loop(){ update(); draw(); requestAnimationFrame(loop); }
+
+let imgReady = false;
+let spritesLoaded = 0;
+[playerSprites.idle, playerSprites.walk, playerSprites.jump].forEach(img => {
+  img.onload = () => {
+    spritesLoaded++;
+    if (spritesLoaded === 3) { imgReady = true; tryStart(); }
+  };
+});
+
+loadQuestions().then(tryStart);
+initLuckyBlock();
+
+function tryStart(){
+  if(!imgReady) return;
+  if(activeQuestions === null && !loadFailed) return; // still loading
+
+  loadingOverlay.style.display = "none";
+
+  if(loadFailed){
+    errorOverlay.style.display = "flex";
+    return;
+  }
+  const requestedLevel = parseInt(localStorage.getItem("selectedStartLevel")) || 1;
+  currentLevel = (requestedLevel >= 1 && requestedLevel <= 3) ? requestedLevel : 1;
+  levelStartScore = 0;
+  buildCurrentLevel();
+  loop();
+}
+
+// ================= LEVEL FLOW =================
+function finishLevel(){
+  levelFinished = true;
+  player.vx = 0;
+  player.vy = 0;
+
+  if (currentLevel < 3) {
+    // Interstitial, then the next level — the topic isn't complete yet.
+    const next = currentLevel + 1;
+    document.getElementById("levelIntroTitle").textContent = `Level ${next}: ${levelName(next)}`;
+    document.getElementById("levelIntroText").textContent =
+      next === 2
+        ? t("levelintro_maze_text", { n: POINTS_PER_LEVEL[2] })
+        : t("levelintro_flappy_text", { n: POINTS_PER_LEVEL[3] });
+    document.getElementById("levelIntro").style.display = "flex";
+    return;
+  }
+
+  // Level 3 done -> the whole topic is complete.
+  const completed = JSON.parse(localStorage.getItem("completedTopics") || "[]");
+  if (!completed.includes(selectedTopic)) {
+    completed.push(selectedTopic);
+    localStorage.setItem("completedTopics", JSON.stringify(completed));
+    saveProgressToServer(completed);
+  }
+
+  localStorage.setItem("lastScore", score);
+  submitScoreToLeaderboard();
+
+  summary.style.display = "flex";
+  resultText.textContent = `${t("endscreen_score_label")} ${score}`;
+}
+
+function startNextLevel(){
+  document.getElementById("levelIntro").style.display = "none";
+  currentLevel++;
+  levelStartScore = score;
+  buildCurrentLevel();
+}
+
+// ================= UPDATE =================
+function update(){
+  if(isAsking || levelFinished) return;
+  if(currentLevel === 1) updatePlatformer();
+  else if(currentLevel === 2) updateMaze();
+  else updateFlappy();
+}
+
+function updatePlatformer(){
+  player.vx = 0;
+  if(keys.ArrowLeft || keys.KeyA) player.vx = -player.speed;
+  if(keys.ArrowRight || keys.KeyD) player.vx = player.speed;
+  if((keys.Space || keys.ArrowUp) && player.onGround){
+    player.vy = -14;
+    player.onGround = false;
+  }
+
+  player.vy += gravity;
+  player.x += player.vx;
+  player.y += player.vy;
+
+  player.onGround = false;
+  platforms.forEach(p=>{
+    if(
+      player.x + player.w > p.x &&
+      player.x < p.x + p.w &&
+      player.y + player.h > p.y &&
+      player.y + player.h < p.y + p.h + 20 &&
+      player.vy >= 0
+    ){
+      player.y = p.y - player.h;
+      player.vy = 0;
+      player.onGround = true;
+    }
+  });
+
+  // SPIKES = RESTART CURRENT LEVEL
+  spikes.forEach(s=>{
+    if(
+      player.x < s.x + s.w &&
+      player.x + player.w > s.x &&
+      player.y < s.y + s.h &&
+      player.y + player.h > s.y
+    ){
+      buildCurrentLevel();
+    }
+  });
+
+  // QUESTIONS — a correct answer retires the block; a wrong one swaps in a
+  // different question and leaves the block active so it can be retried.
+questions.forEach(q=>{
+  if(
+    !q.used &&
+    player.x < q.x + q.w &&
+    player.x + player.w > q.x &&
+    player.y < q.y + q.h &&
+    player.y + player.h > q.y
+  ){
+    askQuestion(q, correct => {
+      if (correct) q.used = true;
+      else q.data = pickReplacementQuestion(q.data);
+    });
+  }
+});
+
+ // FINISH LINE
+if (player.x + player.w > finishLine.x) {
+  finishLevel();
+  return;
+}
+
+  // CAMERA
+  cameraX = Math.max(0, player.x - canvas.width / 2);
+}
+
+function updateMaze(){
+  // Top-view movement: no gravity, 4-directional at walking speed.
+  let dx = 0, dy = 0;
+  if(keys.ArrowLeft || keys.KeyA) dx = -player.speed;
+  if(keys.ArrowRight || keys.KeyD) dx = player.speed;
+  if(keys.ArrowUp || keys.KeyW) dy = -player.speed;
+  if(keys.ArrowDown || keys.KeyS) dy = player.speed;
+  player.vx = dx; // drives the walk/idle sprite + facing flip
+
+  // Axis-separated collision so the player slides along walls.
+  const solids = walls.concat(gates.filter(g => !g.open));
+  player.x += dx;
+  solids.forEach(s=>{
+    if(rectsOverlap(player, s)) player.x = dx > 0 ? s.x - player.w : s.x + s.w;
+  });
+  player.y += dy;
+  solids.forEach(s=>{
+    if(rectsOverlap(player, s)) player.y = dy > 0 ? s.y - player.h : s.y + s.h;
+  });
+
+  // Question gates: touching a closed gate asks its question; a correct
+  // answer opens the way, a wrong one keeps it shut (walk up and retry).
+  gates.forEach(g=>{
+    if(g.open || isAsking) return;
+    if(g.cooldown > 0){ g.cooldown--; return; }
+    const near = {x:player.x-8, y:player.y-8, w:player.w+16, h:player.h+16};
+    if(rectsOverlap(near, g)){
+      askQuestion({data: g.data}, correct=>{
+        if(correct) g.open = true;
+        else { g.cooldown = 40; g.data = pickReplacementQuestion(g.data); }
+      });
+    }
+  });
+
+  if(mazeExit && rectsOverlap(player, mazeExit)){
+    finishLevel();
+    return;
+  }
+
+  // CAMERA — follows on both axes; centers the maze if it fits on screen.
+  cameraX = mazeW <= canvas.width
+    ? (mazeW - canvas.width) / 2
+    : Math.max(0, Math.min(player.x + player.w/2 - canvas.width/2, mazeW - canvas.width));
+  cameraY = mazeH <= canvas.height
+    ? (mazeH - canvas.height) / 2
+    : Math.max(0, Math.min(player.y + player.h/2 - canvas.height/2, mazeH - canvas.height));
+}
+
+function updateFlappy(){
+  const groundY = canvas.height - 60;
+
+  // A question gate freezes the world until it's answered correctly.
+  if(flappyHold){
+    if(flappyCooldown > 0){ flappyCooldown--; return; }
+    const g = flappyHold;
+    askQuestion({data: g.question}, correct=>{
+      if(correct){ g.open = true; flappyHold = null; }
+      else { flappyCooldown = 45; g.question = pickReplacementQuestion(g.question); } // brief pause, then a different question re-asks
+    });
+    return;
+  }
+
+  // Flap on a fresh press (Space/Up key or the touch jump button).
+  const pressed = keys.Space || keys.ArrowUp;
+  if(pressed && !flapLatch) player.vy = FLAPPY_IMPULSE;
+  flapLatch = !!pressed;
+
+  player.vy += FLAPPY_GRAVITY;
+  player.y += player.vy;
+
+  // Scroll the world left.
+  pipes.forEach(p => p.x -= FLAPPY_SCROLL);
+  flappyGates.forEach(g => g.x -= FLAPPY_SCROLL);
+  flappyFinish.x -= FLAPPY_SCROLL;
+
+  // The character sprite has a fair amount of transparent padding around the
+  // actual silhouette, so testing collision against the full player.w x
+  // player.h box felt unfairly large — it "died"/triggered before the visible
+  // sprite touched anything. Inset the collision box to match what's on screen.
+  const hbX = player.x + player.w * 0.18;
+  const hbW = player.w * 0.64;
+  const hbY = player.y + player.h * 0.15;
+  const hbH = player.h * 0.8;
+
+  // An unopened question gate freezes the world once the player reaches it —
+  // it stands well before its pipe, not blocking part of the pipe's own gap.
+  const nextGate = flappyGates.find(g =>
+    !g.open && hbX + hbW > g.x && hbX < g.x + g.w
+  );
+  if(nextGate){ flappyHold = nextGate; flappyCooldown = 0; return; }
+
+  // Ceiling and floor are soft: the player rests against them instead of dying,
+  // so touching the ground is safe now — only hitting a pipe ends the run.
+  if(player.y < 0){ player.y = 0; player.vy = 0; }
+  if(player.y + player.h > groundY){ player.y = groundY - player.h; player.vy = 0; }
+
+  for(const p of pipes){
+    const inX = hbX + hbW > p.x && hbX < p.x + p.w;
+    if(inX && (hbY < p.gapY || hbY + hbH > p.gapY + p.gapH)){
+      buildCurrentLevel();
+      return;
+    }
+  }
+
+  if(flappyFinish.x < player.x) finishLevel();
+}
+
+// ================= DRAW =================
+function draw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.save();
+  ctx.translate(-cameraX,-cameraY);
+
+  if(currentLevel === 1) drawPlatformer();
+  else if(currentLevel === 2) drawMaze();
+  else drawFlappy();
+
+  ctx.restore();
+}
+
+const BASE_TILE_W = 263; // Base.PNG's 1130x413 aspect ratio scaled to the 96px ground height
+const STONE_OVERHANG = 16;
+
+function drawPlatformer(){
+  const baseReady = baseImg.complete && baseImg.naturalWidth > 0;
+  const stoneReady = stonePlatformImg.complete && stonePlatformImg.naturalWidth > 0;
+
+  platforms.forEach(p=>{
+    if(p.type === "ground" && baseReady){
+      for(let x=p.x; x<p.x+p.w; x+=BASE_TILE_W)
+        ctx.drawImage(baseImg, x, p.y, BASE_TILE_W, p.h);
+    } else if(p.type === "platform" && stoneReady){
+      ctx.drawImage(stonePlatformImg, p.x, p.y - STONE_OVERHANG, p.w, p.h + STONE_OVERHANG*2);
+    } else {
+      for(let x=p.x;x<p.x+p.w;x+=32)
+        for(let y=p.y;y<p.y+p.h;y+=32)
+          ctx.drawImage(platformImg,x,y,32,32);
+    }
+  });
+
+  ctx.fillStyle="red";
+  spikes.forEach(s=>{
+    ctx.beginPath();
+    ctx.moveTo(s.x,s.y+s.h);
+    ctx.lineTo(s.x+s.w/2,s.y);
+    ctx.lineTo(s.x+s.w,s.y+s.h);
+    ctx.fill();
+  });
+
+  questions.forEach(q=>{
+    if(!q.used){
+      if(!drawLuckyBlock(q.x,q.y,q.w,q.h)){
+        ctx.fillStyle="yellow";
+        ctx.fillRect(q.x,q.y,q.w,q.h);
+        ctx.strokeRect(q.x,q.y,q.w,q.h);
+        ctx.fillStyle="#000";
+        ctx.font="bold 32px Arial";
+        ctx.textAlign="center";
+        ctx.textBaseline="middle";
+        ctx.fillText("?",q.x+30,q.y+32);
+      }
+    }
+  });
+
+  if(pipeImg.complete && pipeImg.naturalWidth > 0){
+    ctx.drawImage(pipeImg,finishLine.x,finishLine.y,finishLine.w,finishLine.h);
+  } else {
+    ctx.fillStyle="#fff";
+    ctx.fillRect(finishLine.x,finishLine.y,finishLine.w,finishLine.h);
+  }
+  ctx.drawImage(currentPlayerSprite(),player.x,player.y,player.w,player.h);
+}
+
+// Shared sprite draw with a horizontal flip when moving left (used by the
+// top-view maze so the character faces its walking direction).
+function drawPlayerSpriteFlipped(){
+  const img = currentPlayerSprite();
+  if(player.vx < 0){
+    ctx.save();
+    ctx.translate(player.x + player.w, player.y);
+    ctx.scale(-1, 1);
+    ctx.drawImage(img, 0, 0, player.w, player.h);
+    ctx.restore();
+  } else {
+    ctx.drawImage(img, player.x, player.y, player.w, player.h);
+  }
+}
+
+function drawMaze(){
+  // Floor seen from above — the topic backdrop photo, dimmed so the
+  // walls/gates/player stay readable over it.
+  if(mazeBgImg.complete && mazeBgImg.naturalWidth > 0){
+    ctx.drawImage(mazeBgImg, 0, 0, mazeW, mazeH);
+    ctx.fillStyle = "rgba(15,15,35,0.6)";
+    ctx.fillRect(0, 0, mazeW, mazeH);
+  } else {
+    ctx.fillStyle = "#232345";
+    ctx.fillRect(0, 0, mazeW, mazeH);
+  }
+
+  // Walls — flat placeholder blocks; swapping in tile art later only
+  // touches these draw calls, never the collision rects.
+  ctx.fillStyle = "#4b0010";
+  walls.forEach(w => ctx.fillRect(w.x, w.y, w.w, w.h));
+  ctx.strokeStyle = "rgba(255,215,0,.25)";
+  walls.forEach(w => ctx.strokeRect(w.x, w.y, w.w, w.h));
+
+  // Closed question gates.
+  gates.forEach(g=>{
+    if(g.open) return;
+    if(!drawLuckyBlock(g.x, g.y, g.w, g.h)){
+      ctx.fillStyle = "#FFD700";
+      ctx.fillRect(g.x, g.y, g.w, g.h);
+      ctx.strokeStyle = "#4b0010";
+      ctx.strokeRect(g.x, g.y, g.w, g.h);
+      ctx.fillStyle = "#000";
+      ctx.font = "bold 40px Arial";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("?", g.x + g.w/2, g.y + g.h/2);
+    }
+  });
+
+  // Exit — a green pipe teleporter, same collision box as before but drawn
+  // longer than the tile so it visibly juts out — laid on its side (rather
+  // than standing upright like Level 1's finish pipe) to fit the top-down view.
+  if(mazeExit){
+    if(pipeImg.complete && pipeImg.naturalWidth > 0){
+      const pipeLen = 145, pipeThick = 70;
+      const tileCenterX = mazeExit.x - 10 + MAZE_TILE/2;
+      const tileCenterY = mazeExit.y - 10 + MAZE_TILE/2;
+      ctx.save();
+      ctx.translate(tileCenterX, tileCenterY);
+      ctx.rotate(-Math.PI / 2);
+      ctx.drawImage(pipeImg, -pipeThick/2, -pipeLen/2, pipeThick, pipeLen);
+      ctx.restore();
+    } else {
+      ctx.fillStyle = "#4caf50";
+      ctx.fillRect(mazeExit.x, mazeExit.y, mazeExit.w, mazeExit.h);
+      ctx.fillStyle = "#fff";
+      ctx.font = "bold 16px Arial";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("EXIT", mazeExit.x + mazeExit.w/2, mazeExit.y + mazeExit.h/2);
+    }
+  }
+
+  drawPlayerSpriteFlipped();
+}
+
+function drawFlappy(){
+  const groundY = canvas.height - 60;
+
+  // Pipes — the same green pipe sprite used elsewhere, stretched to fit each
+  // segment. The top pipe is flipped vertically so its rim faces down into
+  // the gap; the bottom pipe keeps its natural rim-up orientation.
+  pipes.forEach(p=>{
+    const botH = groundY - (p.gapY + p.gapH);
+    if(pipeImg.complete && pipeImg.naturalWidth > 0){
+      ctx.save();
+      ctx.translate(p.x, p.gapY);
+      ctx.scale(1, -1);
+      ctx.drawImage(pipeImg, 0, 0, p.w, p.gapY);
+      ctx.restore();
+      ctx.drawImage(pipeImg, p.x, p.gapY + p.gapH, p.w, botH);
+    } else {
+      ctx.fillStyle = "#2e7d32";
+      ctx.fillRect(p.x, 0, p.w, p.gapY);
+      ctx.fillRect(p.x, p.gapY + p.gapH, p.w, botH);
+      ctx.strokeStyle = "#1b4d1e";
+      ctx.strokeRect(p.x, 0, p.w, p.gapY);
+      ctx.strokeRect(p.x, p.gapY + p.gapH, p.w, botH);
+    }
+  });
+
+  // Question gates — a full-height wall standing before its pipe, blocking
+  // the path entirely until answered (rather than sitting inside the pipe's
+  // own gap). Once answered it opens and stops drawing/colliding entirely.
+  flappyGates.forEach(g=>{
+    if(g.open) return;
+    ctx.fillStyle = "rgba(75,0,16,.85)";
+    ctx.fillRect(g.x, 0, g.w, groundY);
+    ctx.strokeStyle = "#FFD700";
+    ctx.strokeRect(g.x, 0, g.w, groundY);
+    const bSize = g.w;
+    const bY = groundY/2 - bSize/2;
+    if(!drawLuckyBlock(g.x, bY, bSize, bSize)){
+      ctx.fillStyle = "rgba(255,215,0,.75)";
+      ctx.fillRect(g.x, bY, bSize, bSize);
+      ctx.fillStyle = "#000";
+      ctx.font = "bold 40px Arial";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("?", g.x + bSize/2, bY + bSize/2);
+    }
+  });
+
+  // Finish flag.
+  if(flappyFinish){
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(flappyFinish.x, 0, flappyFinish.w, groundY);
+  }
+
+  // Ground strip.
+  ctx.fillStyle = "#4b0010";
+  ctx.fillRect(0, groundY, canvas.width, 60);
+
+  ctx.drawImage(currentPlayerSprite(), player.x, player.y, player.w, player.h);
+}
+
+// ================= ANSWER UI =================
+// A brief 3-2-1 beat shown after Continue, before gameplay resumes, so the
+// player isn't dropped straight back into physics (mid-jump/mid-flap) the
+// instant they finish reading the explanation.
+const countdownOverlay = document.getElementById("countdownOverlay");
+const countdownNumber = document.getElementById("countdownNumber");
+function showCountdown(done){
+  let n = 3;
+  countdownNumber.textContent = n;
+  countdownOverlay.style.display = "flex";
+  const tick = () => {
+    n--;
+    if (n > 0) {
+      countdownNumber.textContent = n;
+      setTimeout(tick, 700);
+    } else {
+      countdownOverlay.style.display = "none";
+      clearKeys(); // don't let input held during the countdown carry over
+      done();
+    }
+  };
+  setTimeout(tick, 700);
+}
+
+// onResult (optional) is called with true/false after the modal closes —
+// maze gates and flappy question pipes use it to open (or stay shut).
+function askQuestion(q, onResult){
+  isAsking = true;
+  clearKeys();
+
+  const quizText = document.getElementById("quizText");
+  const quizChoices = document.getElementById("quizChoices");
+  const quizFeedback = document.getElementById("quizFeedback");
+  const quizSourceBadge = document.getElementById("quizSourceBadge");
+  const quizExplain = document.getElementById("quizExplain");
+  const quizExplainText = document.getElementById("quizExplainText");
+  const quizContinueBtn = document.getElementById("quizContinueBtn");
+
+  // questionsSource is always "fallback" now (live Gemini calls are disabled,
+  // see loadQuestions()), but the offline bank's 240 questions were written
+  // with Gemini's help, so the badge still credits it rather than reading
+  // "AI-generated" (which would imply a live per-question API call).
+  quizSourceBadge.textContent = t("quiz_badge");
+  quizSourceBadge.className = "source-gemini";
+
+  quizText.textContent = q.data.text;
+  quizFeedback.textContent = "";
+  quizChoices.innerHTML = "";
+  quizExplain.style.display = "none";
+  quizContinueBtn.style.display = "none";
+
+  q.data.choices.forEach((choice, i) => {
+    const btn = document.createElement("button");
+    btn.textContent = choice;
+    btn.onclick = () => {
+      [...quizChoices.children].forEach(b => b.disabled = true);
+      const isCorrect = (i + 1) === q.data.correct;
+
+      if (isCorrect) {
+        btn.style.background = "#4caf50";
+        score += POINTS_PER_LEVEL[currentLevel];
+        scoreEl.textContent = score;
+        quizFeedback.textContent = t("quiz_correct_feedback", { n: POINTS_PER_LEVEL[currentLevel] });
+      } else {
+        btn.style.background = "#e53935";
+        quizChoices.children[q.data.correct - 1].style.background = "#4caf50";
+        quizFeedback.textContent = t("quiz_wrong_feedback");
+      }
+
+      // Domie explains the answer (right or wrong); the player reads it on
+      // their own time and taps Continue instead of the modal auto-closing.
+      quizExplainText.textContent = q.data.explain || "";
+      quizExplain.style.display = "flex";
+      quizContinueBtn.style.display = "block";
+      quizContinueBtn.onclick = () => {
+        quizModal.style.display = "none";
+        // isAsking stays true through the countdown so physics/scrolling
+        // stay frozen — gives the player a beat to get their bearings
+        // before the level resumes.
+        showCountdown(() => {
+          isAsking = false;
+          if (onResult) onResult(isCorrect);
+        });
+      };
+    };
+    quizChoices.appendChild(btn);
+  });
+
+  quizModal.style.display = "flex";
+}
+
+// ================= UI =================
+function chooseAnotherTopic(){
+  window.location.href = "em-waves.html";
+}
+
+function goMenu(){
+  window.location.href = "em-waves.html";
+}
+
+function goMap(){
+  window.location.href = "em-waves.html";
+}
+
+function goRanks(){
+  window.location.href = "em-waves.html";
+}
+
+</script>
+
+
+</body>
+
+</html>
